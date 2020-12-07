@@ -1,0 +1,159 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<definitions 
+    xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" 
+    xmlns:wsp="http://www.w3.org/ns/ws-policy" 
+    xmlns:wsp1_2="http://schemas.xmlsoap.org/ws/2004/09/policy" 
+    xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:tns="http://services.vlink.com.bo/" 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns="http://schemas.xmlsoap.org/wsdl/" 
+    targetNamespace="http://services.vlink.com.bo/" 
+    name="CustomerServices">
+    <types>
+        <xs:schema 
+            xmlns:tns="http://services.vlink.com.bo/" 
+            xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+            version="1.0" 
+            targetNamespace="http://services.vlink.com.bo/">
+            <xs:element name="consultarEstado" type="tns:consultarEstado"/>
+            <xs:element name="consultarEstadoResponse" type="tns:consultarEstadoResponse"/>
+            <xs:element name="revertirPago" type="tns:revertirPago"/>
+            <xs:element name="revertirPagoResponse" type="tns:revertirPagoResponse"/>
+            <xs:element name="solicitarPago" type="tns:solicitarPago"/>
+            <xs:element name="solicitarPagoAsincrono" type="tns:solicitarPagoAsincrono"/>
+            <xs:element name="solicitarPagoAsincronoResponse" type="tns:solicitarPagoAsincronoResponse"/>
+            <xs:element name="solicitarPagoResponse" type="tns:solicitarPagoResponse"/>
+            <xs:complexType name="revertirPago">
+                <xs:sequence>
+                    <xs:element name="key" type="xs:string" minOccurs="0"/>
+                    <xs:element name="parametros" type="xs:string" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="revertirPagoResponse">
+                <xs:sequence>
+                    <xs:element name="return" type="xs:string" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="solicitarPagoAsincrono">
+                <xs:sequence>
+                    <xs:element name="key" type="xs:string" minOccurs="0"/>
+                    <xs:element name="parametros" type="xs:string" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="solicitarPagoAsincronoResponse">
+                <xs:sequence>
+                    <xs:element name="return" type="xs:string" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="consultarEstado">
+                <xs:sequence>
+                    <xs:element name="key" type="xs:string" minOccurs="0"/>
+                    <xs:element name="parametros" type="xs:string" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="consultarEstadoResponse">
+                <xs:sequence>
+                    <xs:element name="return" type="xs:string" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="solicitarPago">
+                <xs:sequence>
+                    <xs:element name="key" type="xs:string" minOccurs="0"/>
+                    <xs:element name="parametros" type="xs:string" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="solicitarPagoResponse">
+                <xs:sequence>
+                    <xs:element name="return" type="xs:string" minOccurs="0"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:schema>
+    </types>
+    <message name="consultarEstado">
+        <part name="parameters" element="tns:consultarEstado"/>
+    </message>
+    <message name="consultarEstadoResponse">
+        <part name="parameters" element="tns:consultarEstadoResponse"/>
+    </message>
+    <message name="solicitarPago">
+        <part name="parameters" element="tns:solicitarPago"/>
+    </message>
+    <message name="solicitarPagoResponse">
+        <part name="parameters" element="tns:solicitarPagoResponse"/>
+    </message>
+    <message name="revertirPago">
+        <part name="parameters" element="tns:revertirPago"/>
+    </message>
+    <message name="revertirPagoResponse">
+        <part name="parameters" element="tns:revertirPagoResponse"/>
+    </message>
+    <message name="solicitarPagoAsincrono">
+        <part name="parameters" element="tns:solicitarPagoAsincrono"/>
+    </message>
+    <message name="solicitarPagoAsincronoResponse">
+        <part name="parameters" element="tns:solicitarPagoAsincronoResponse"/>
+    </message>
+    <portType name="CustomerServices">
+        <operation name="consultarEstado">
+            <input wsam:Action="http://services.vlink.com.bo/CustomerServices/consultarEstadoRequest" message="tns:consultarEstado"/>
+            <output wsam:Action="http://services.vlink.com.bo/CustomerServices/consultarEstadoResponse" message="tns:consultarEstadoResponse"/>
+        </operation>
+        <operation name="solicitarPago">
+            <input wsam:Action="http://services.vlink.com.bo/CustomerServices/solicitarPagoRequest" message="tns:solicitarPago"/>
+            <output wsam:Action="http://services.vlink.com.bo/CustomerServices/solicitarPagoResponse" message="tns:solicitarPagoResponse"/>
+        </operation>
+        <operation name="revertirPago">
+            <input wsam:Action="http://services.vlink.com.bo/CustomerServices/revertirPagoRequest" message="tns:revertirPago"/>
+            <output wsam:Action="http://services.vlink.com.bo/CustomerServices/revertirPagoResponse" message="tns:revertirPagoResponse"/>
+        </operation>
+        <operation name="solicitarPagoAsincrono">
+            <input wsam:Action="http://services.vlink.com.bo/CustomerServices/solicitarPagoAsincronoRequest" message="tns:solicitarPagoAsincrono"/>
+            <output wsam:Action="http://services.vlink.com.bo/CustomerServices/solicitarPagoAsincronoResponse" message="tns:solicitarPagoAsincronoResponse"/>
+        </operation>
+    </portType>
+    <binding name="CustomerServicesPortBinding" type="tns:CustomerServices">
+        <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+        <operation name="consultarEstado">
+            <soap:operation soapAction=""/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="solicitarPago">
+            <soap:operation soapAction=""/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="revertirPago">
+            <soap:operation soapAction=""/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="solicitarPagoAsincrono">
+            <soap:operation soapAction=""/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+    </binding>
+    <service name="CustomerServices">
+        <port name="CustomerServicesPort" binding="tns:CustomerServicesPortBinding">
+            <soap:address location="https://200.73.103.30:443/PasarelaServicesTP/CustomerServices"/>
+        </port>
+    </service>
+</definitions>

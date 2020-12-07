@@ -1,0 +1,653 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "API - SAP",
+        "description": "Bienvenido a API-SAP v2, aquí encontrarás toda la documentación necesaria para utilizar nuestra API y conectarte a SAP del GRUPO LAFUENTE. API-SAP v2 está basada en REST, utiliza el formato de datos JSON. Todos los recursos de la API requieren un `apikey` de acceso válido para la autenticación. Para obtener un token de acceso personal, comunicarse con el equipo de Tecnología de Información.",
+        "version": "2.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://172.28.3.79:8080/api-sap/v2/",
+            "description": "Servicios SAP v2 puerto 8080"
+        },
+        {
+            "url": "https://172.28.3.79/api-sap/v2/",
+            "description": "Servicios SAP v2 con SSL"
+        },
+        {
+            "url": "https://apis100-dev.grupo-lafuente.com/api-sap/v2/",
+            "description": "Servicios SAP v2 con DNS"
+        }   
+    ],
+    "security": [
+        {
+            "ApiKeyAuth": []
+        }
+    ],
+    "paths": {
+        "/sd/{sociedad}/proyectos": {
+            "get": {
+                "tags": [
+                    "proyectos"
+                ],
+                "operationId": "listarProyectos",
+                "parameters": [
+                    {
+                        "name": "sociedad",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/sd/tipo-cambio/{matnr}": {
+            "get": {
+                "tags": [
+                    "proyectos"
+                ],
+                "operationId": "tipoCambio",
+                "parameters": [
+                    {
+                        "name": "matnr",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/sd/mapas/{matnr}": {
+            "get": {
+                "tags": [
+                    "proyectos"
+                ],
+                "operationId": "listarWms",
+                "parameters": [
+                    {
+                        "name": "matnr",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/sd/{sociedad}/clientes": {
+            "get": {
+                "tags": [
+                    "clientes"
+                ],
+                "operationId": "listarClientesPorComercializadora",
+                "parameters": [
+                    {
+                        "name": "sociedad",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "numeroDeudor",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "numeroDocumento",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/sd/{sociedad}/clientes/{numeroDeudor}/tiene-reservas-contratos": {
+            "get": {
+                "tags": [
+                    "clientes"
+                ],
+                "operationId": "listarReservasPorDeudor",
+                "parameters": [
+                    {
+                        "name": "sociedad",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "numeroDeudor",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/sd/{sociedad}/clientes/{numeroDeudor}/reservas": {
+            "get": {
+                "tags": [
+                    "reservas"
+                ],
+                "operationId": "listarReservasPorDeudor",
+                "parameters": [
+                    {
+                        "name": "sociedad",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "numeroDeudor",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/sd/{sociedad}/clientes/{numeroDeudor}/reservas-pago": {
+            "get": {
+                "tags": [
+                    "reservas"
+                ],
+                "operationId": "listarReservasNoCobradasPorDeudor",
+                "parameters": [
+                    {
+                        "name": "sociedad",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "numeroDeudor",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/sd/reservas/{documentoVenta}/cuotas": {
+            "get": {
+                "tags": [
+                    "reservas"
+                ],
+                "operationId": "listarCuotasPorReserva",
+                "parameters": [
+                    {
+                        "name": "documentoVenta",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "estadoCuota",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/sd/{sociedad}/clientes/{numeroDeudor}/contratos": {
+            "get": {
+                "tags": [
+                    "contratos"
+                ],
+                "operationId": "listarContratosPorDeudor",
+                "parameters": [
+                    {
+                        "name": "sociedad",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "numeroDeudor",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/sd/{sociedad}/clientes/{numeroDeudor}/contratos-pago": {
+            "get": {
+                "tags": [
+                    "contratos"
+                ],
+                "operationId": "listarContratosNoCobradosPorDeudor",
+                "parameters": [
+                    {
+                        "name": "sociedad",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "numeroDeudor",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/sd/contratos/{documentoVenta}/cuotas": {
+            "get": {
+                "tags": [
+                    "contratos"
+                ],
+                "operationId": "listarCuotasPorContrato",
+                "parameters": [
+                    {
+                        "name": "documentoVenta",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "estadoCuota",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/sd/{sociedad}/clientes/{numeroDeudor}/contratos-sin-entrega": {
+            "get": {
+                "tags": [
+                    "actas-entrega"
+                ],
+                "operationId": "contratosSinActaEntrega",
+                "parameters": [
+                    {
+                        "name": "sociedad",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "numeroDeudor",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/sd/voucher/{documentoVenta}-{numeroDocumento}": {
+            "get": {
+                "tags": [
+                    "voucher"
+                ],
+                "operationId": "voucher",
+                "parameters": [
+                    {
+                        "name": "documentoVenta",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "numeroDocumento",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {},
+                            "application/octet-stream": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/sd/reservas/tigomoney": {
+            "post": {
+                "tags": [
+                    "tigomoney"
+                ],
+                "operationId": "tigomoneyReserva",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PagoDTO"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/sd/contratos/tigomoney": {
+            "post": {
+                "tags": [
+                    "tigomoney"
+                ],
+                "operationId": "tigomoneyContrato",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PagoDTO"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/sd/reservas/linkser": {
+            "post": {
+                "tags": [
+                    "linkser"
+                ],
+                "operationId": "linkserReserva",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PagoDTO"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/sd/contratos/linkser": {
+            "post": {
+                "tags": [
+                    "linkser"
+                ],
+                "operationId": "linkserContrato",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PagoDTO"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },  
+        "/qr/generar-pago-reservas": {
+            "post": {
+                "tags": [
+                    "qr"
+                ],
+                "operationId": "simpleQRReservas",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PagoDTO"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        },
+        "/qr/generar-pago-contratos": {
+            "post": {
+                "tags": [
+                    "qr"
+                ],
+                "operationId": "simpleQRContratos",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PagoDTO"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "default": {
+                        "description": "default response",
+                        "content": {
+                            "application/json": {}
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ItemDTO": {
+                "type": "object",
+                "properties": {
+                    "seqcuo": {
+                        "type": "string"
+                    },
+                    "impcuo": {
+                        "type": "number"
+                    }
+                }
+            },
+            "PagoDTO": {
+                "type": "object",
+                "properties": {
+                    "bukrs": {
+                        "type": "string"
+                    },
+                    "docven": {
+                        "type": "string"
+                    },
+                    "matnr": {
+                        "type": "string"
+                    },
+                    "linea": {
+                        "type": "string"
+                    },
+                    "monto": {
+                        "type": "number"
+                    },
+                    "moneda": {
+                        "type": "string"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ItemDTO"
+                        }
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "ApiKeyAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "apikey"
+            }
+        }
+    }
+}

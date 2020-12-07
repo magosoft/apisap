@@ -1,0 +1,278 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<wsdl:definitions 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+    xmlns:tns="http://Servicio/" 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+    xmlns:ns1="http://schemas.xmlsoap.org/soap/http"     
+    targetNamespace="http://Servicio/"
+    name="ServiciosEcommeLNK" >
+    <wsdl:types>
+        <xs:schema 
+            xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+            xmlns:tns="http://Servicio/" 
+            elementFormDefault="unqualified" 
+            targetNamespace="http://Servicio/" 
+            version="1.0">
+            <xs:element name="getReto" type="tns:getReto"/>
+            <xs:element name="getRetoResponse" type="tns:getRetoResponse"/>
+            <xs:element name="me_get_Con_Autho_RangoFecha_Ecomm" type="tns:me_get_Con_Autho_RangoFecha_Ecomm"/>
+            <xs:element name="me_get_Con_Autho_RangoFecha_EcommResponse" type="tns:me_get_Con_Autho_RangoFecha_EcommResponse"/>
+            <xs:element name="me_get_Cons_Autho_Ecomm" type="tns:me_get_Cons_Autho_Ecomm"/>
+            <xs:element name="me_get_Cons_Autho_EcommResponse" type="tns:me_get_Cons_Autho_EcommResponse"/>
+            <xs:element name="me_set_Autho_Ecomm" type="tns:me_set_Autho_Ecomm"/>
+            <xs:element name="me_set_Autho_EcommResponse" type="tns:me_set_Autho_EcommResponse"/>
+            <xs:element name="me_set_Rever_Ecomm" type="tns:me_set_Rever_Ecomm"/>
+            <xs:element name="me_set_Rever_EcommResponse" type="tns:me_set_Rever_EcommResponse"/>
+            <xs:element name="setRegistrar" type="tns:setRegistrar"/>
+            <xs:element name="setRegistrarResponse" type="tns:setRegistrarResponse"/>
+            <xs:complexType name="getReto">
+                <xs:sequence/>
+            </xs:complexType>
+            <xs:complexType name="getRetoResponse">
+                <xs:sequence>
+                    <xs:element minOccurs="0" name="return" type="xs:string"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="setRegistrar">
+                <xs:sequence>
+                    <xs:element minOccurs="0" name="cod_institucion" type="xs:string"/>
+                    <xs:element minOccurs="0" name="llave_publica" type="xs:string"/>
+                    <xs:element minOccurs="0" name="llave_registro" type="xs:string"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="setRegistrarResponse">
+                <xs:sequence>
+                    <xs:element minOccurs="0" name="return" type="xs:string"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="me_get_Con_Autho_RangoFecha_Ecomm">
+                <xs:sequence>
+                    <xs:element minOccurs="0" name="cod_institucion" type="xs:string"/>
+                    <xs:element minOccurs="0" name="cod_comercio" type="xs:string"/>
+                    <xs:element name="fecha_inicio" type="xs:int"/>
+                    <xs:element name="fecha_fin" type="xs:int"/>
+                    <xs:element minOccurs="0" name="reto" type="xs:string"/>
+                    <xs:element minOccurs="0" name="validacionDigital" type="xs:string"/>
+                    <xs:element minOccurs="0" name="llave_registro" type="xs:string"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="me_get_Con_Autho_RangoFecha_EcommResponse">
+                <xs:sequence>
+                    <xs:element maxOccurs="unbounded" minOccurs="0" name="return" type="xs:anyType"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="me_set_Rever_Ecomm">
+                <xs:sequence>
+                    <xs:element minOccurs="0" name="cod_institucion" type="xs:string"/>
+                    <xs:element minOccurs="0" name="secuencia" type="xs:string"/>
+                    <xs:element name="fecha_transaccion" type="xs:int"/>
+                    <xs:element name="fecha_envio" type="xs:int"/>
+                    <xs:element minOccurs="0" name="hora_envio" type="xs:string"/>
+                    <xs:element minOccurs="0" name="reto" type="xs:string"/>
+                    <xs:element minOccurs="0" name="validacionDigital" type="xs:string"/>
+                    <xs:element minOccurs="0" name="llave_registro" type="xs:string"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="me_set_Rever_EcommResponse">
+                <xs:sequence>
+                    <xs:element maxOccurs="unbounded" minOccurs="0" name="return" type="xs:anyType"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="me_get_Cons_Autho_Ecomm">
+                <xs:sequence>
+                    <xs:element minOccurs="0" name="cod_institucion" type="xs:string"/>
+                    <xs:element minOccurs="0" name="secuencia" type="xs:string"/>
+                    <xs:element minOccurs="0" name="tarjeta" type="xs:string"/>
+                    <xs:element minOccurs="0" name="cod_comercio" type="xs:string"/>
+                    <xs:element minOccurs="0" name="cod_terminal" type="xs:string"/>
+                    <xs:element name="fecha_transaccion" type="xs:int"/>
+                    <xs:element minOccurs="0" name="servicio" type="xs:string"/>
+                    <xs:element minOccurs="0" name="monto" type="xs:string"/>
+                    <xs:element minOccurs="0" name="moneda" type="xs:string"/>
+                    <xs:element minOccurs="0" name="fecha_expiracion" type="xs:string"/>
+                    <xs:element minOccurs="0" name="reto" type="xs:string"/>
+                    <xs:element minOccurs="0" name="validacionDigital" type="xs:string"/>
+                    <xs:element minOccurs="0" name="llave_registro" type="xs:string"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="me_get_Cons_Autho_EcommResponse">
+                <xs:sequence>
+                    <xs:element maxOccurs="unbounded" minOccurs="0" name="return" type="xs:anyType"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="me_set_Autho_Ecomm">
+                <xs:sequence>
+                    <xs:element minOccurs="0" name="cod_institucion" type="xs:string"/>
+                    <xs:element minOccurs="0" name="secuencia" type="xs:string"/>
+                    <xs:element minOccurs="0" name="cod_comercio" type="xs:string"/>
+                    <xs:element minOccurs="0" name="cod_terminal" type="xs:string"/>
+                    <xs:element minOccurs="0" name="tarjeta" type="xs:string"/>
+                    <xs:element minOccurs="0" name="nombre_cliente" type="xs:string"/>
+                    <xs:element minOccurs="0" name="fecha_expiracion" type="xs:string"/>
+                    <xs:element minOccurs="0" name="cvv2" type="xs:string"/>
+                    <xs:element minOccurs="0" name="monto" type="xs:string"/>
+                    <xs:element minOccurs="0" name="moneda" type="xs:string"/>
+                    <xs:element name="fecha_envio" type="xs:int"/>
+                    <xs:element minOccurs="0" name="hora_envio" type="xs:string"/>
+                    <xs:element minOccurs="0" name="reto" type="xs:string"/>
+                    <xs:element minOccurs="0" name="validacionDigital" type="xs:string"/>
+                    <xs:element minOccurs="0" name="llave_registro" type="xs:string"/>
+                </xs:sequence>
+            </xs:complexType>
+            <xs:complexType name="me_set_Autho_EcommResponse">
+                <xs:sequence>
+                    <xs:element maxOccurs="unbounded" minOccurs="0" name="return" type="xs:anyType"/>
+                </xs:sequence>
+            </xs:complexType>
+        </xs:schema>
+    </wsdl:types>
+    <wsdl:message name="getReto">
+        <wsdl:part element="tns:getReto" name="parameters">
+        </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="setRegistrar">
+        <wsdl:part element="tns:setRegistrar" name="parameters">
+        </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="setRegistrarResponse">
+        <wsdl:part element="tns:setRegistrarResponse" name="parameters">
+        </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="me_get_Con_Autho_RangoFecha_EcommResponse">
+        <wsdl:part element="tns:me_get_Con_Autho_RangoFecha_EcommResponse" name="parameters">
+        </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="me_set_Autho_EcommResponse">
+        <wsdl:part element="tns:me_set_Autho_EcommResponse" name="parameters">
+        </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="me_get_Con_Autho_RangoFecha_Ecomm">
+        <wsdl:part element="tns:me_get_Con_Autho_RangoFecha_Ecomm" name="parameters">
+        </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="me_set_Rever_Ecomm">
+        <wsdl:part element="tns:me_set_Rever_Ecomm" name="parameters">
+        </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="me_get_Cons_Autho_Ecomm">
+        <wsdl:part element="tns:me_get_Cons_Autho_Ecomm" name="parameters">
+        </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="getRetoResponse">
+        <wsdl:part element="tns:getRetoResponse" name="parameters">
+        </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="me_set_Rever_EcommResponse">
+        <wsdl:part element="tns:me_set_Rever_EcommResponse" name="parameters">
+        </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="me_get_Cons_Autho_EcommResponse">
+        <wsdl:part element="tns:me_get_Cons_Autho_EcommResponse" name="parameters">
+        </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="me_set_Autho_Ecomm">
+        <wsdl:part element="tns:me_set_Autho_Ecomm" name="parameters">
+        </wsdl:part>
+    </wsdl:message>
+    <wsdl:portType name="ServiciosEcommeLNK">
+        <wsdl:operation name="getReto">
+            <wsdl:input message="tns:getReto" name="getReto">
+            </wsdl:input>
+            <wsdl:output message="tns:getRetoResponse" name="getRetoResponse">
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="setRegistrar">
+            <wsdl:input message="tns:setRegistrar" name="setRegistrar">
+            </wsdl:input>
+            <wsdl:output message="tns:setRegistrarResponse" name="setRegistrarResponse">
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="me_get_Con_Autho_RangoFecha_Ecomm">
+            <wsdl:input message="tns:me_get_Con_Autho_RangoFecha_Ecomm" name="me_get_Con_Autho_RangoFecha_Ecomm">
+            </wsdl:input>
+            <wsdl:output message="tns:me_get_Con_Autho_RangoFecha_EcommResponse" name="me_get_Con_Autho_RangoFecha_EcommResponse">
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="me_set_Rever_Ecomm">
+            <wsdl:input message="tns:me_set_Rever_Ecomm" name="me_set_Rever_Ecomm">
+            </wsdl:input>
+            <wsdl:output message="tns:me_set_Rever_EcommResponse" name="me_set_Rever_EcommResponse">
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="me_get_Cons_Autho_Ecomm">
+            <wsdl:input message="tns:me_get_Cons_Autho_Ecomm" name="me_get_Cons_Autho_Ecomm">
+            </wsdl:input>
+            <wsdl:output message="tns:me_get_Cons_Autho_EcommResponse" name="me_get_Cons_Autho_EcommResponse">
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="me_set_Autho_Ecomm">
+            <wsdl:input message="tns:me_set_Autho_Ecomm" name="me_set_Autho_Ecomm">
+            </wsdl:input>
+            <wsdl:output message="tns:me_set_Autho_EcommResponse" name="me_set_Autho_EcommResponse">
+            </wsdl:output>
+        </wsdl:operation>
+    </wsdl:portType>
+    <wsdl:binding name="ServiciosEcommeLNKSoapBinding" type="tns:ServiciosEcommeLNK">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <wsdl:operation name="getReto">
+            <soap:operation soapAction="" style="document"/>
+            <wsdl:input name="getReto">
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output name="getRetoResponse">
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="setRegistrar">
+            <soap:operation soapAction="" style="document"/>
+            <wsdl:input name="setRegistrar">
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output name="setRegistrarResponse">
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="me_set_Rever_Ecomm">
+            <soap:operation soapAction="" style="document"/>
+            <wsdl:input name="me_set_Rever_Ecomm">
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output name="me_set_Rever_EcommResponse">
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="me_get_Con_Autho_RangoFecha_Ecomm">
+            <soap:operation soapAction="" style="document"/>
+            <wsdl:input name="me_get_Con_Autho_RangoFecha_Ecomm">
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output name="me_get_Con_Autho_RangoFecha_EcommResponse">
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="me_get_Cons_Autho_Ecomm">
+            <soap:operation soapAction="" style="document"/>
+            <wsdl:input name="me_get_Cons_Autho_Ecomm">
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output name="me_get_Cons_Autho_EcommResponse">
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="me_set_Autho_Ecomm">
+            <soap:operation soapAction="" style="document"/>
+            <wsdl:input name="me_set_Autho_Ecomm">
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output name="me_set_Autho_EcommResponse">
+                <soap:body use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+    </wsdl:binding>
+    <wsdl:service name="ServiciosEcommeLNK">
+        <wsdl:port binding="tns:ServiciosEcommeLNKSoapBinding" name="ServiciosEcommeLNKPort">
+            <soap:address location="https://lnksrvssaup2.linkser.com.bo:9483/wsComercioEcomme/ServiciosEcommeLNK"/>
+        </wsdl:port>
+    </wsdl:service>
+</wsdl:definitions>
