@@ -1,7 +1,6 @@
 package com.lafuente.sap.rest;
 
 import java.io.IOException;
-import java.util.Enumeration;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -32,7 +31,7 @@ public class CORSFilter implements Filter {
             throws IOException, ServletException {
         HttpServletRequest servletRequest = (HttpServletRequest) request;
         HttpServletResponse servletResponse = (HttpServletResponse) response;
-        
+
         if (StringUtils.isEmpty(servletRequest.getHeader("X-Forwarded-Host"))) {
             servletResponse.addHeader("Access-Control-Allow-Origin", "*");
             servletResponse.addHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
@@ -40,14 +39,20 @@ public class CORSFilter implements Filter {
             servletResponse.addHeader("Access-Control-Allow-Headers",
                     "Access-Control-Allow-Credentials, Access-Control-Allow-Headers, Origin, X-Requested-With, Content-Type, Accept, Authorization, Access-Control-Allow-Origin, Access-Control-Allow-Methods, apikey");
 
-        }        
-
+        }
         /// For HTTP OPTIONS verb/method reply with ACCEPTED status code
         if (servletRequest.getMethod().equals("OPTIONS")) {
             servletResponse.setStatus(HttpServletResponse.SC_OK);
             return;
         }
+
+        long startTime = System.currentTimeMillis();
         chain.doFilter(request, response);
+        long elapsed = System.currentTimeMillis() - startTime;
+        if (DEBUG && request instanceof HttpServletRequest) {
+            String uri = ((HttpServletRequest) request).getRequestURI();
+            log("URI: " + uri + " time: " + elapsed + " ms");
+        }
     }
 
     public FilterConfig getFilterConfig() {
@@ -68,7 +73,7 @@ public class CORSFilter implements Filter {
         if (filterConfig != null) {
             if (DEBUG) {
                 log("CORSFilter: Initializing filter");
-            }
+            } 
         }
     }
 

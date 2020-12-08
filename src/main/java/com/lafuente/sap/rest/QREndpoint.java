@@ -160,12 +160,16 @@ public class QREndpoint {
         Map<String, Object> resultado = new HashMap<>();
         try {
             daoPG.openDatabase(configuration.getProperties());
-            ResultSet rs = daoPG.rawQuery("SELECT * FROM pagos.qr_response WHERE id_qr = '" + dto.getQrId() + "' AND estado = 1", null);
+            ResultSet rs = daoPG.rawQuery("SELECT * FROM pagos.obtener_qr_response('" + dto.getQrId() + "')", null);
             try {
                 if (rs.next()) {
                     String json = rs.getString("dato");
                     String tipoDoc = rs.getString("tipo_doc");
                     resultado = cobrarQR(json, tipoDoc, dto.getQrId());
+                    if ((boolean) resultado.get("success") == true) {
+                        rs = daoPG.rawQuery("SELECT pagos.cobrar_qr_response('" + dto.getQrId() + "')", null);
+                        rs.next();
+                    }
                 } else {
                     resultado.put("success", false);
                     resultado.put("message", "No existe ID: " + dto.getQrId());
@@ -282,7 +286,7 @@ public class QREndpoint {
             if (serviceS.hasErrorCobro(r1)) {
                 throw new GELException(CodeError.GEL30021);
             }
-            insertar(r1, BigDecimal.ZERO);
+            insertar(r1, transaccion, BigDecimal.ZERO, "BOB");
 
             return getResult(r1);
         } catch (GELException ex) {
@@ -293,7 +297,7 @@ public class QREndpoint {
 
     }
 
-    private void insertar(ZfiWsCobranzasEcTt r1, BigDecimal monto) {
+    private void insertar(ZfiWsCobranzasEcTt r1, String transaccion, BigDecimal monto, String moneda) {
         try {
             daoPG.openDatabase(configuration.getProperties());
             asicon = "";
@@ -304,27 +308,22 @@ public class QREndpoint {
                 }
                 fila.put("doccon", elem.getDoccon());
                 fila.put("asicon", asicon);
-                fila.put("asicond", elem.getAsicon());
+                fila.put("asicon_sap", elem.getAsicon());
                 fila.put("seqcuo", elem.getSeqcuo());
                 fila.put("tipdoc", elem.getTipdoc());
-                if (!BigDecimal.ZERO.equals(monto) && "2".equals(elem.getMoncuo())) {
-                    fila.put("impcob", monto);
-                    fila.put("moncob", "BOB");
-                }
-                //fila.put("resum", fila);
+                fila.put("numcom", transaccion);
+                fila.put("impcob", monto);
+                fila.put("moncob", moneda);
                 fila.put("numid", elem.getNumid());
                 fila.put("nomcli", elem.getNomcli());
-                //fila.put("direc", fila);
                 fila.put("maktx", elem.getMaktx());
                 fila.put("datter", elem.getDatter());
-                //fila.put("numcom", fila);
                 fila.put("feccob", elem.getFeccob());
                 fila.put("hora", elem.getHora());
                 fila.put("impori", elem.getImpori());
                 fila.put("impdes", elem.getImpdes());
                 fila.put("imprec", elem.getImprec());
                 fila.put("impcuo", elem.getImpcuo());
-                //fila.put("saldo", fila);
                 fila.put("moncuo", elem.getMoncuo());
                 daoPG.insert("pagos.transaccion_response", fila);
             }

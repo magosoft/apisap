@@ -236,8 +236,7 @@ public class LDEndpoint {
 
     private void i(String message) {
         if (!StringUtils.isEmpty(message)) {
-            Logger.getLogger("LD")
-                    .log(Level.INFO, message);
+            Logger.getLogger("LD").log(Level.INFO, message);
         }
     }
 }

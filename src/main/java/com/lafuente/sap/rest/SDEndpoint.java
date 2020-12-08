@@ -391,9 +391,9 @@ public class SDEndpoint {
             ZfiWsCobranzasIcTt i0 = HelperSAP.getZfiWsCobranzasIcTt(items, dto, user, tipoDoc, cantidadHistorico);
             ServicioTIGOMONEY serviceT = new ServicioTIGOMONEY(configuration.getProperties(), dto.getBukrs(), tc);
             Map<String, String> responsePagarBs = serviceT.pagarBs(dto, tipoDoc);
-
+            String transaccion = responsePagarBs.get("transaccion");
             i0.getItem().forEach((elem) -> {
-                elem.setNumcom(responsePagarBs.get("transaccion"));
+                elem.setNumcom(transaccion);
             });
             BigDecimal monto = serviceT.obtenerMonto();
             ZfiWsCobranzasEcTt r1 = serviceS.cobrar(i0);
@@ -401,7 +401,7 @@ public class SDEndpoint {
                 serviceT.anular(tipoDoc + "#" + dto.toOrderId());
                 throw new GELException(CodeError.GEL30021);
             }
-            insertar(r1, monto);
+            insertar(r1, transaccion, monto, "BOB");
             return Response.ok(HelperSAP.createResponse(r1)).build();
 
         } catch (GELException ex) {
@@ -473,7 +473,7 @@ public class SDEndpoint {
                 serviceL.anular();
                 throw new GELException(CodeError.GEL30021);
             }
-            insertar(r1, BigDecimal.ZERO);
+            insertar(r1, transaccion, BigDecimal.ZERO, "BOB");
             return Response.ok(HelperSAP.createResponse(r1)).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
@@ -543,7 +543,7 @@ public class SDEndpoint {
             dao.openDatabase(configuration.getProperties());
             HashMap<String, Object> item = null;
             try {
-                ResultSet rs = daoPG.rawQuery("SELECT asicon,tipdoc FROM pagos.transaccion_response WHERE doccon = '" + documentoVenta + "' AND asicond = '" + numeroDocumento + "';", null);
+                ResultSet rs = daoPG.rawQuery("SELECT asicon,tipdoc FROM pagos.transaccion_response WHERE doccon = '" + documentoVenta + "' AND asicon_sap = '" + numeroDocumento + "';", null);
                 if (rs.next()) {
                     asicon = rs.getString("asicon");
                     String tipdoc = rs.getString("tipdoc");
@@ -596,8 +596,11 @@ public class SDEndpoint {
                     String comma = "";
                     BigDecimal total = BigDecimal.ZERO;
                     String moneda = "BOB";
-
-                    rs = dao.ejecutarConsulta(SPQuery.VOUCHER_RESERVA, new Object[]{documentoVenta, numeroDocumento});
+                    if (documentoVenta.charAt(0) == '4') {
+                        rs = dao.ejecutarConsulta(SPQuery.VOUCHER_CONTRATO, new Object[]{documentoVenta, 0, asicon});
+                    } else {
+                        rs = dao.ejecutarConsulta(SPQuery.VOUCHER_RESERVA, new Object[]{documentoVenta, asicon});
+                    }
                     if (rs.next()) {
                         item = new HashMap<>();
                         item.put("vbeln", rs.getString("vbln"));
@@ -616,12 +619,10 @@ public class SDEndpoint {
                         moneda = rs.getString("waerk");
                         item.put("waerk", moneda);
                         item.put("cttel", rs.getString("cttel"));
-                        item.put("fecven", rs.getString("fecven"));
+                        item.put("fecven", documentoVenta.charAt(0) == '4' ? "1900-01-01" : rs.getString("fecven"));
                         comma = ",";
                     }
-                    boolean esContrato = true;
                     if (item != null) {
-                        esContrato = false;
                         while (rs.next()) {
                             seqcuo += comma + rs.getString("fplt");
                             total = total.add(rs.getBigDecimal("fakw"));
@@ -631,40 +632,7 @@ public class SDEndpoint {
                         item.put("fakw", total);
                         item.put("fakwlit", SAPUtils.literalMoneda(total, moneda));
                     }
-                    if (esContrato) {
-                        rs = dao.ejecutarConsulta(SPQuery.VOUCHER_CONTRATO, new Object[]{documentoVenta, 0, numeroDocumento});
-                        if (rs.next()) {
-                            item = new HashMap<>();
-                            item.put("vbeln", rs.getString("vbln"));
-                            seqcuo += comma + rs.getString("fplt");
-                            item.put("asicon", rs.getString("asicon"));
-                            item.put("fkpg", rs.getString("fkpg"));
-                            total = total.add(rs.getBigDecimal("fakw"));
-                            item.put("name", rs.getString("name").trim());
-                            item.put("strSuppl", rs.getString("str_suppl"));
-                            item.put("matnr", rs.getString("matnr"));
-                            item.put("atwrt01", rs.getString("atwrt_01"));
-                            item.put("atwrt02", rs.getString("atwrt_02"));
-                            item.put("atwrt03", rs.getString("atwrt_03"));
-                            item.put("netwr", rs.getBigDecimal("netwr"));
-                            item.put("pname", rs.getString("pname"));
-                            moneda = rs.getString("waerk");
-                            item.put("waerk", moneda);
-                            item.put("cttel", rs.getString("cttel"));
-                            item.put("fecven", "1900-01-01");
-                            comma = ",";
-                        }
-                        if (item != null) {
-                            while (rs.next()) {
-                                seqcuo += comma + rs.getString("fplt");
-                                total = total.add(rs.getBigDecimal("fakw"));
-                                comma = ",";
-                            }
-                            item.put("fplt", seqcuo);
-                            item.put("fakw", total);
-                            item.put("fakwlit", SAPUtils.literalMoneda(total, moneda));
-                        }
-                    }
+
                 }
             } catch (SQLException ex) {
                 throw new GELException(CodeError.GEL20000, ex);
@@ -818,7 +786,7 @@ public class SDEndpoint {
 
     }
 
-    private void insertar(ZfiWsCobranzasEcTt r1, BigDecimal monto) {
+    private void insertar(ZfiWsCobranzasEcTt r1, String transaccion, BigDecimal monto, String moneda) {
         try {
             daoPG.openDatabase(configuration.getProperties());
             asicon = "";
@@ -829,27 +797,22 @@ public class SDEndpoint {
                 }
                 fila.put("doccon", elem.getDoccon());
                 fila.put("asicon", asicon);
-                fila.put("asicond", elem.getAsicon());
+                fila.put("asicon_sap", elem.getAsicon());
                 fila.put("seqcuo", elem.getSeqcuo());
                 fila.put("tipdoc", elem.getTipdoc());
-                if (!BigDecimal.ZERO.equals(monto) && "2".equals(elem.getMoncuo())) {
-                    fila.put("impcob", monto);
-                    fila.put("moncob", "BOB");
-                }
-                //fila.put("resum", fila);
+                fila.put("numcom", transaccion);
+                fila.put("impcob", monto);
+                fila.put("moncob", moneda);
                 fila.put("numid", elem.getNumid());
                 fila.put("nomcli", elem.getNomcli());
-                //fila.put("direc", fila);
                 fila.put("maktx", elem.getMaktx());
                 fila.put("datter", elem.getDatter());
-                //fila.put("numcom", fila);
                 fila.put("feccob", elem.getFeccob());
                 fila.put("hora", elem.getHora());
                 fila.put("impori", elem.getImpori());
                 fila.put("impdes", elem.getImpdes());
                 fila.put("imprec", elem.getImprec());
                 fila.put("impcuo", elem.getImpcuo());
-                //fila.put("saldo", fila);
                 fila.put("moncuo", elem.getMoncuo());
                 daoPG.insert("pagos.transaccion_response", fila);
             }

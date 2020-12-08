@@ -41,13 +41,7 @@
             <groupId>org.apache.cxf.xjc-utils</groupId>
             <artifactId>cxf-xjc-runtime</artifactId>
             <version>3.3.1</version>
-        </dependency>      
-        <!-- https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-jaxrs2 -->
-        <dependency>
-            <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-jaxrs2</artifactId>
-            <version>2.1.2</version>
-        </dependency> 
+        </dependency>  
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -98,7 +92,6 @@
                             <sourceRoot>${project.build.directory}/generated-sources/cxf</sourceRoot>
                             <wsdlOptions>
                                 <wsdlOption>  
-                                     
                                     <wsdl>${basedir}/src/main/resources/wsdl/sap/zfi_wsb_cobranza.wsdl</wsdl>    
                                     <wsdl>${basedir}/src/main/resources/wsdl/tigomoney/CustomerServices.wsdl</wsdl>    
                                     <wsdl>${basedir}/src/main/resources/wsdl/linkser/ServiciosEcommeLNK.wsdl</wsdl>    

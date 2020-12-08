@@ -1,6 +1,5 @@
 package com.lafuente.sap.rest;
 
-import com.lafuente.linkser.ws.ServicioLINKSER;
 import com.lafuente.sap.dao.PGDatabase;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -23,11 +22,12 @@ import org.apache.commons.lang3.StringUtils;
  */
 @ApplicationPath("v2")
 public class JAXRSApplication extends Application {
+
     @Inject
     private PGDatabase daoPG;
 
-    public JAXRSApplication(@Context ServletConfig servletConfig) {          
-       
+    public JAXRSApplication(@Context ServletConfig servletConfig) {
+
     }
 
     @Override
