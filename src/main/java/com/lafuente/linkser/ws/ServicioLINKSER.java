@@ -111,20 +111,8 @@ public class ServicioLINKSER {
 
     }
 
-    public void setReto(String reto) {
-        this.reto = reto;
-    }
-
-    public String getReto() {
-        try {
-            port = crearServicio();
-            reto = port.getReto();
-            return reto;
-        } catch (javax.xml.ws.WebServiceException ex) {
-            System.out.println("ERROR: " + ex.getMessage());
-            return "";
-        }
-    }
+   
+   
 
     public void anular() throws GELException {
         try {

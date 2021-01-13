@@ -30,6 +30,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -286,7 +287,7 @@ public class QREndpoint {
             if (serviceS.hasErrorCobro(r1)) {
                 throw new GELException(CodeError.GEL30021);
             }
-            insertar(r1, transaccion, BigDecimal.ZERO, "BOB");
+            asicon = insertar(r1, transaccion, BigDecimal.ZERO, "BOB");
 
             return getResult(r1);
         } catch (GELException ex) {
@@ -297,11 +298,13 @@ public class QREndpoint {
 
     }
 
-    private void insertar(ZfiWsCobranzasEcTt r1, String transaccion, BigDecimal monto, String moneda) {
+    private String insertar(ZfiWsCobranzasEcTt r1, String transaccion, BigDecimal monto, String moneda) {
         try {
             daoPG.openDatabase(configuration.getProperties());
             asicon = "";
-            for (ZfiWsCobranzasEcStr elem : r1.getItem()) {
+            final List<ZfiWsCobranzasEcStr> lista = r1.getItem();
+            for (int i = lista.size(); i > 0 ; i--) {
+                ZfiWsCobranzasEcStr elem = lista.get(i-1);
                 Map<String, Object> fila = new HashMap<>();
                 if (asicon.isEmpty()) {
                     asicon = elem.getAsicon();
@@ -326,12 +329,13 @@ public class QREndpoint {
                 fila.put("impcuo", elem.getImpcuo());
                 fila.put("moncuo", elem.getMoncuo());
                 daoPG.insert("pagos.transaccion_response", fila);
-            }
+            }            
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
             daoPG.closeDatabase();
         }
+        return asicon;
     }
 
     private Map<String, Object> getResult(ZfiWsCobranzasEcTt r1) {

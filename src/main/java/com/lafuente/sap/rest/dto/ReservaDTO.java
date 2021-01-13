@@ -18,6 +18,7 @@ public class ReservaDTO implements Serializable {
     private String tipoVenta;
     private String plazo;
     private BigDecimal netwr;
+    private String moneda;
 
     public String getVbeln() {
         return vbeln;
@@ -73,6 +74,14 @@ public class ReservaDTO implements Serializable {
 
     public void setNetwr(BigDecimal netwr) {
         this.netwr = netwr;
+    }
+
+    public String getMoneda() {
+        return moneda;
+    }
+
+    public void setMoneda(String moneda) {
+        this.moneda = moneda;
     }
 
 }

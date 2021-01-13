@@ -1,6 +1,6 @@
 package com.lafuente.sap.rest;
 
-import com.lafuente.sap.dao.PGDatabase;
+import com.lafuente.linkser.ws.ServicioLINKSER;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.inject.Inject;
 import javax.servlet.ServletConfig;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
@@ -23,15 +22,13 @@ import org.apache.commons.lang3.StringUtils;
 @ApplicationPath("v2")
 public class JAXRSApplication extends Application {
 
-    @Inject
-    private PGDatabase daoPG;
-
     public JAXRSApplication(@Context ServletConfig servletConfig) {
-
+        ServicioLINKSER serviceL = new ServicioLINKSER(getProperties(), "1300");
+        serviceL.registrar();
     }
 
     @Override
-    public Map<String, Object> getProperties() {
+    public  Map<String, Object> getProperties() {
         Map<String, Object> map = new HashMap<>();
         try {
             Properties propertiesSystem = System.getProperties();

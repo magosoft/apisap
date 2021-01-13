@@ -24,14 +24,13 @@ import org.apache.commons.lang3.StringUtils;
  * @author GUIDO CACERES PINTO
  */
 public class HelperSAP {
-    
-   
+
     public static final String RESERVA = "R";
     public static final String CONTRATO = "C";
     private static final String SUCURSAL = "123";
     private static final String AGENCIA = "456";
     private static final String NUMERO = "6569246";
-    
+
     public static void validarDTO(PagoDTO dto) throws GELException {
         if (dto == null) {
             throw new GELException(CodeError.GEL30018);
@@ -42,51 +41,59 @@ public class HelperSAP {
         if (dto.getItems().isEmpty()) {
             throw new GELException(CodeError.GEL30017);
         }
-        if(StringUtils.isEmpty(dto.getSucursal())){
+        if (StringUtils.isEmpty(dto.getSucursal())) {
             dto.setSucursal(SUCURSAL);
         }
-        if(StringUtils.isEmpty(dto.getAgencia())){
+        if (StringUtils.isEmpty(dto.getAgencia())) {
             dto.setAgencia(AGENCIA);
         }
         String matnr = "000000000000000000" + dto.getMatnr();
         dto.setMatnr(matnr.substring(matnr.length() - 18));
         BigDecimal sum = BigDecimal.ZERO;
         //double sum = 0;
-        
+
         for (ItemDTO r1 : dto.getItems()) {
             String seqcuo = "000" + r1.getSeqcuo();
             r1.setSeqcuo(seqcuo.substring(seqcuo.length() - 3));
             sum = sum.add(r1.getImpcuo());
-           
+
         }
         if (dto.getMonto().doubleValue() != sum.doubleValue()) {
-            throw new GELException("GEL30016","La sumatoria de las cuotas no es igual: " + dto.getMonto().doubleValue() + " <> " + sum.doubleValue());
+            throw new GELException("GEL30016", "La sumatoria de las cuotas no es igual: " + dto.getMonto().doubleValue() + " <> " + sum.doubleValue());
         }
     }
-    
-    public static Map<String, String> createResponse(ZfiWsCobranzasEcTt r1) throws GELException {
+
+    public static Map<String, String> createResponse(ZfiWsCobranzasEcTt r1, String asicon) throws GELException {
+        Map<String, String> map = new HashMap<>();
+        map.put("doccon", r1.getItem().get(0).getDoccon());
+        map.put("asicon", asicon);
+        i("[PAGO EXITOSO] CLIENTE: " + r1.getItem().get(0).getNomcli() + ", HORA: " + r1.getItem().get(0).getHora() + ", DATO TERRENO: " + r1.getItem().get(0).getDatter());
+        return map;
+    }
+
+    /*public static Map<String, String> createResponse(ZfiWsCobranzasEcTt r1) throws GELException {
         Map<String, String> map = new HashMap<>();
         map.put("doccon", r1.getItem().get(0).getDoccon());
         map.put("asicon", r1.getItem().get(0).getAsicon());
         i("[PAGO EXITOSO] CLIENTE: " + r1.getItem().get(0).getNomcli() + ", HORA: " + r1.getItem().get(0).getHora() + ", DATO TERRENO: " + r1.getItem().get(0).getDatter());
         return map;
-    }
-    
+    }*/
+
     public static ZfiWsCobranzasIcTt getZfiWsCobranzasIcTt(ZfiWsCobrConsCuotasETt r2, PagoDTO dto, String user, String tipoDoc, int cantHist) throws GELException {
         List<ZfiWsCobrConsCuotasEStr> items0 = r2.getItem();
         List<ItemDTO> items1 = dto.getItems();
-        
+
         if (items0.size() < items1.size()) {
             throw new GELException();
         }
-        
+
         ZfiWsCobranzasIcTt lista = new ZfiWsCobranzasIcTt();
         String fecha = SAPUtils.fechaSistema();
         XMLGregorianCalendar hora = SAPUtils.horaSistema();
         for (int i = 0; i < items1.size(); i++) {
             ItemDTO i1 = items1.get(i);
             ZfiWsCobrConsCuotasEStr i0 = items0.get(i);
-            
+
             ZfiWsCobranzasIcStr item = createItem(i0, fecha, hora, user);
             if (RESERVA.equals(tipoDoc)) {
                 validarReserva(i0, i1);
@@ -95,12 +102,12 @@ public class HelperSAP {
             } else {
                 validarContrato(i0, i1, cantHist);
             }
-            
+
             lista.getItem().add(item);
         }
         return lista;
     }
-    
+
     private static ZfiWsCobranzasIcStr createItem(ZfiWsCobrConsCuotasEStr r2, String fechaCobro, XMLGregorianCalendar horaCobro, String cajero) {
         ZfiWsCobranzasIcStr e0 = new ZfiWsCobranzasIcStr();
         e0.setBanco(r2.getBanco());
@@ -122,7 +129,7 @@ public class HelperSAP {
         e0.setCodcaj(cajero);
         return e0;
     }
-    
+
     private static void validarContrato(ZfiWsCobrConsCuotasEStr i0, ItemDTO i1, int cantHist) throws GELException {
         int n = Integer.parseInt(i1.getSeqcuo()) - cantHist;
         String seqcuo = "000" + n;
@@ -141,7 +148,7 @@ public class HelperSAP {
             throw new GELException(CodeError.GEL30014);
         }
     }
-    
+
     private static void validarReserva(ZfiWsCobrConsCuotasEStr i0, ItemDTO i1) throws GELException {
         if (!RESERVA.equalsIgnoreCase(i0.getTipdoc())) {
             i("VALIDACION: " + RESERVA + " <> " + i0.getTipdoc());
@@ -154,12 +161,11 @@ public class HelperSAP {
             throw new GELException(CodeError.GEL30004);
         }
     }
-    
+
     private static void i(String message) {
         if (!StringUtils.isEmpty(message)) {
-            Logger.getLogger("API-SAP")
-                    .log(Level.INFO, message);
+            Logger.getLogger("REST").log(Level.INFO, message);
         }
     }
-    
+
 }

@@ -35,7 +35,7 @@
             window.onload = function () {
                 // Begin Swagger UI call region
                 const ui = SwaggerUIBundle({
-                    url: "openapi.json?v=" + new Date().getTime(),
+                    url: "http://172.28.3.79:8080/api-sap/openapi.json?v=" + new Date().getTime(),
                     dom_id: '#swagger-ui',
                     deepLinking: true,
                     presets: [

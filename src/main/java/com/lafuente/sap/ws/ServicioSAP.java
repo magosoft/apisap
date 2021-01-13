@@ -72,7 +72,8 @@ public class ServicioSAP {
             port = crearServicio();
             return port.zfiWsCobranzasCobranza(i0);
         } catch (javax.xml.ws.WebServiceException ex) {
-            throw new GELException(CodeError.GEL30070, ex);
+            return null;
+            //throw new GELException(CodeError.GEL30070, ex);
         }
     }
 
@@ -125,7 +126,7 @@ public class ServicioSAP {
             tlsCP.setUseHttpsURLConnectionDefaultSslSocketFactory(true);
             tlsCP.setUseHttpsURLConnectionDefaultHostnameVerifier(true);
             http.setTlsClientParameters(tlsCP);
-            
+
             AuthorizationPolicy authPolicy = new AuthorizationPolicy();
             authPolicy.setAuthorizationType("Basic");
             authPolicy.setUserName(user);
@@ -136,6 +137,9 @@ public class ServicioSAP {
     }
 
     public boolean hasErrorCobro(ZfiWsCobranzasEcTt r1) {
+        if (r1 == null) {
+            return true;
+        }
         for (ZfiWsCobranzasEcStr elem : r1.getItem()) {
             if (!"01".equalsIgnoreCase(elem.getResul())) {
                 return true;

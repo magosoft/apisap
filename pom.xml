@@ -17,7 +17,7 @@
         <dependency>
             <groupId>com.sap</groupId>
             <artifactId>ngdbc</artifactId>
-            <version>1.0</version>
+            <version>1.0</version>            
         </dependency>
         <dependency>
             <groupId>criptografia</groupId>
@@ -91,11 +91,11 @@
                         <configuration>
                             <sourceRoot>${project.build.directory}/generated-sources/cxf</sourceRoot>
                             <wsdlOptions>
-                                <wsdlOption>  
-                                    <wsdl>${basedir}/src/main/resources/wsdl/sap/zfi_wsb_cobranza.wsdl</wsdl>    
-                                    <wsdl>${basedir}/src/main/resources/wsdl/tigomoney/CustomerServices.wsdl</wsdl>    
-                                    <wsdl>${basedir}/src/main/resources/wsdl/linkser/ServiciosEcommeLNK.wsdl</wsdl>    
-                                    <wsdl>${basedir}/src/main/resources/wsdl/sap/zcomercial.wsdl</wsdl>                           
+                                <wsdlOption>
+                                    <wsdl>${basedir}/src/main/resources/wsdl/tigomoney/CustomerServices.wsdl</wsdl>   
+                                    <wsdl>${basedir}/src/main/resources/wsdl/linkser/ServiciosEcommeLNK.wsdl</wsdl> 
+                                    <wsdl>${basedir}/src/main/resources/wsdl/sap/zfi_wsb_cobranza.wsdl</wsdl>        
+                                    <wsdl>${basedir}/src/main/resources/wsdl/sap/zcomercial.wsdl</wsdl>                  
                                 </wsdlOption>
                             </wsdlOptions>
                         </configuration>

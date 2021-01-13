@@ -34,10 +34,12 @@ public enum CodeError {
     GEL30023(404, "El sistema no puede completar la acción, codigo comercio sin asignar."),
     GEL30024(409, "El importe no puede estar vacio!"),
     GEL30025(409, "El numeroCuota no puede estar vacio!"),
+    GEL30026(409, "Intente de nuevo con una cuota inicial menor!"),
     GEL30050(503, "El sistema no puede completar la acción, problemas con el servicio web de TIGOMONEY."),
     GEL30060(503, "El sistema no puede completar la acción, problemas con el servicio web de LINKSER."),
     GEL30070(503, "El sistema no puede completar la acción, problemas con el servicio web de SAP."),
-    GEL30080(503, "El sistema no puede completar la acción, problemas con el servicio QR."),;
+    GEL30080(503, "El sistema no puede completar la acción, problemas con el servicio QR."),
+    
     ;
 
     private final String message;

@@ -8,8 +8,8 @@ package com.lafuente.sap.rest;
 import com.lafuente.sap.dao.PGDatabase;
 import com.lafuente.sap.exceptions.GELException;
 import com.lafuente.sap.exceptions.GELExceptionMapping;
-import com.lafuente.sap.rest.stream.ListResultOutput;
-import com.lafuente.sap.rest.stream.SingleResultOutput;
+import com.lafuente.sap.rest.stream.ArrayOutput;
+import com.lafuente.sap.rest.stream.ResultSetToJsonMapper;
 import java.sql.ResultSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,7 +48,7 @@ public class LDEndpoint {
             query += "'SELECT * FROM public.zf_gel_s0001f6 (0)') AS t(cmnotnume NUMERIC,cmnotabog VARCHAR, cmnotdire VARCHAR, cmnottele VARCHAR, cmnotcelu VARCHAR, cmnotmail VARCHAR, cmnotlati NUMERIC, cmnotlong NUMERIC)";
             daoPG.openDatabase(configuration.getProperties());
             ResultSet rs = daoPG.rawQuery(query, null);
-            return Response.ok(new ListResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -67,7 +67,7 @@ public class LDEndpoint {
             query += "'SELECT * FROM public.zf_gel_s0001f6 (" + id + ")') AS t(cmnotnume NUMERIC,cmnotabog VARCHAR, cmnotdire VARCHAR, cmnottele VARCHAR, cmnotcelu VARCHAR, cmnotmail VARCHAR, cmnotlati NUMERIC, cmnotlong NUMERIC)";
             daoPG.openDatabase(configuration.getProperties());
             ResultSet rs = daoPG.rawQuery(query, null);
-            return Response.ok(new SingleResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.singleResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -86,7 +86,7 @@ public class LDEndpoint {
             query += "'SELECT * FROM public.zf_gel_s0001f7 (''" + carnet + "'')') AS t(cliente VARCHAR,tipodoc VARCHAR, nrodocu VARCHAR, nrotelf VARCHAR)";
             daoPG.openDatabase(configuration.getProperties());
             ResultSet rs = daoPG.rawQuery(query, null);
-            return Response.ok(new SingleResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.singleResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -103,7 +103,7 @@ public class LDEndpoint {
         try {
             daoPG.openDatabase(configuration.getProperties());
             ResultSet rs = daoPG.rawQuery("SELECT * FROM seguridad.zf_gel_s0001f8('" + sociedad + "')", null);
-            return Response.ok(new ListResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -123,7 +123,7 @@ public class LDEndpoint {
             query += "AS t(matnr VARCHAR,maktx VARCHAR,atwrt01 VARCHAR,atwrt02 VARCHAR,atwrt03 VARCHAR,vbeln VARCHAR, partner VARCHAR,cmfltfech date,cmflthora VARCHAR,nomclien VARCHAR,tipodoc NUMERIC,cmcomndoc VARCHAR,cmcomedoc VARCHAR,cmcomntel VARCHAR)";
             daoPG.openDatabase(configuration.getProperties());
             ResultSet rs = daoPG.rawQuery(query, null);
-            return Response.ok(new ListResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -144,7 +144,7 @@ public class LDEndpoint {
             query += "AS t(matnr VARCHAR,maktx VARCHAR,atwrt01 VARCHAR,atwrt02 VARCHAR,atwrt03 VARCHAR,vbeln VARCHAR, partner VARCHAR,cmfltfech date,cmflthora VARCHAR,nomclien VARCHAR,tipodoc NUMERIC,cmcomndoc VARCHAR,cmcomedoc VARCHAR,cmcomntel VARCHAR)";
             daoPG.openDatabase(configuration.getProperties());
             ResultSet rs = daoPG.rawQuery(query, null);
-            return Response.ok(new ListResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -164,7 +164,7 @@ public class LDEndpoint {
             query += "AS t(matnr VARCHAR,maktx VARCHAR,atwrt01 VARCHAR,atwrt02 VARCHAR,atwrt03 VARCHAR,vbeln VARCHAR, partner VARCHAR,cmfltfech date,cmflthora VARCHAR, cmfltnnot NUMERIC,nomclien VARCHAR,tipodoc NUMERIC,cmcomndoc VARCHAR,cmcomedoc VARCHAR,cmcomntel VARCHAR)";
             daoPG.openDatabase(configuration.getProperties());
             ResultSet rs = daoPG.rawQuery(query, null);
-            return Response.ok(new ListResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -185,7 +185,7 @@ public class LDEndpoint {
             query += "AS t(matnr VARCHAR,maktx VARCHAR,atwrt01 VARCHAR,atwrt02 VARCHAR,atwrt03 VARCHAR,vbeln VARCHAR, partner VARCHAR,cmfltfech date,cmflthora VARCHAR, cmfltnnot NUMERIC,nomclien VARCHAR,tipodoc NUMERIC,cmcomndoc VARCHAR,cmcomedoc VARCHAR,cmcomntel VARCHAR)";
             daoPG.openDatabase(configuration.getProperties());
             ResultSet rs = daoPG.rawQuery(query, null);
-            return Response.ok(new ListResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -205,7 +205,7 @@ public class LDEndpoint {
             query += "AS t(matnr VARCHAR,maktx VARCHAR,atwrt01 VARCHAR,atwrt02 VARCHAR,atwrt03 VARCHAR,vbeln VARCHAR, partner VARCHAR,cmfltfech date,cmflthora VARCHAR,nomclien VARCHAR,tipodoc NUMERIC,cmcomndoc VARCHAR,cmcomedoc VARCHAR,cmcomntel VARCHAR)";
             daoPG.openDatabase(configuration.getProperties());
             ResultSet rs = daoPG.rawQuery(query, null);
-            return Response.ok(new ListResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -226,7 +226,7 @@ public class LDEndpoint {
             query += "AS t(matnr VARCHAR,maktx VARCHAR,atwrt01 VARCHAR,atwrt02 VARCHAR,atwrt03 VARCHAR,vbeln VARCHAR, partner VARCHAR,cmfltfech date,cmflthora VARCHAR,nomclien VARCHAR,tipodoc NUMERIC,cmcomndoc VARCHAR,cmcomedoc VARCHAR,cmcomntel VARCHAR)";
             daoPG.openDatabase(configuration.getProperties());
             ResultSet rs = daoPG.rawQuery(query, null);
-            return Response.ok(new ListResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {

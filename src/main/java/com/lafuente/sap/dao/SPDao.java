@@ -31,8 +31,8 @@ public class SPDao extends SAPDatabase {
         try {
             CallableStatement cstmt = this.conn.prepareCall("{ CALL " + query.consulta() + " }");
             loadParameters(cstmt, values);
-            result = cstmt.executeQuery();
             print("{ CALL " + query.consulta() + " }", values);
+            result = cstmt.executeQuery();            
         } catch (SQLException ex) {
             throw new GELException(CodeError.GEL20000, ex);
         }

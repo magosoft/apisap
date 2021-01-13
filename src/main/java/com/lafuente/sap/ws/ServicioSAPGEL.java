@@ -35,16 +35,15 @@ import org.apache.cxf.transport.http.HTTPConduit;
 public class ServicioSAPGEL {
 
     private ZCOMERCIAL port;
-    //private final Map<String, Object> config;
-    //private final String bank;
-   // private final String user;
+    private final Map<String, Object> config;
+    
+    private final String user;
 
-   /* public ServicioSAPGEL(Map<String, Object> config, String bank, String user) {
+    public ServicioSAPGEL(Map<String, Object> config,  String user) {
         port = null;
-        this.config = config;
-        this.bank = bank;
+        this.config = config;        
         this.user = user;
-    }*/
+    }
 
     private ZCOMERCIAL crearServicio() {
         if (port == null) {
@@ -78,7 +77,7 @@ public class ServicioSAPGEL {
                 System.out.println(ex.getMessage());
             }
             JaxWsProxyFactoryBean factory = new JaxWsProxyFactoryBean();
-            //factory.setAddress((String) config.get("ws.sap.url"));
+            factory.setAddress((String) config.get("ws.sap.url_2"));
             port = factory.create(ZCOMERCIAL.class);
             ClientImpl client = (ClientImpl) ClientProxy.getClient(port);
 
@@ -98,8 +97,8 @@ public class ServicioSAPGEL {
 
             AuthorizationPolicy authPolicy = new AuthorizationPolicy();
             authPolicy.setAuthorizationType("Basic");
-            authPolicy.setUserName("DCACERES");
-            authPolicy.setPassword("caceres*123");
+            authPolicy.setUserName(user);
+            authPolicy.setPassword((String) config.get("ws.sap." + user));
             http.setAuthorization(authPolicy);
         }
         return port;

@@ -10,8 +10,9 @@ import com.lafuente.sap.exceptions.GELException;
 import com.lafuente.sap.exceptions.GELExceptionMapping;
 import com.lafuente.sap.rest.dto.PagoDTO;
 import com.lafuente.sap.rest.dto.ReservaDTO;
-import com.lafuente.sap.rest.stream.ListResultOutput;
-import com.lafuente.sap.rest.stream.SingleResultOutput;
+import com.lafuente.sap.rest.dto.SolicitudCompraDTO;
+import com.lafuente.sap.rest.stream.ArrayOutput;
+import com.lafuente.sap.rest.stream.ResultSetToJsonMapper;
 import com.lafuente.sap.utils.SAPUtils;
 import com.lafuente.sap.ws.HelperSAP;
 import com.lafuente.sap.ws.ServicioSAP;
@@ -24,11 +25,7 @@ import com.sap.document.sap.soap.functions.mc_style.ZfiWsCobranzasIcTt;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +66,18 @@ public class SDEndpoint {
 
     private String asicon;
 
+    /*@PostConstruct
+    public void init() {
+        
+    }*/
+
+ /* @PreDestroy
+    public void end() {
+        System.out.println("FIN DATABASE");
+        dao.closeDatabase();
+        daoPG.closeDatabase();
+        daoMap.closeDatabase();
+    }*/
     @GET
     @Path("{sociedad}/clientes")
     @Produces(MediaType.APPLICATION_JSON)
@@ -80,7 +89,7 @@ public class SDEndpoint {
         try {
             dao.openDatabase(configuration.getProperties());
             ResultSet rs = dao.ejecutarConsulta(SPQuery.LIST_CLIENTES, new Object[]{sociedad, numeroDeudor, numeroDocumento});
-            return Response.ok(new ListResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -98,7 +107,7 @@ public class SDEndpoint {
         try {
             dao.openDatabase(configuration.getProperties());
             ResultSet rs = dao.ejecutarConsulta(SPQuery.LIST_RESERVAS, new Object[]{sociedad, numeroDeudor});
-            return Response.ok(new ListResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -120,7 +129,7 @@ public class SDEndpoint {
             }
             dao.openDatabase(configuration.getProperties());
             ResultSet rs = dao.ejecutarConsulta(SPQuery.LIST_RESERVAS_POR_PAGAR, new Object[]{sociedad, numeroDeudor, modres});
-            return Response.ok(new ListResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -138,7 +147,7 @@ public class SDEndpoint {
         try {
             dao.openDatabase(configuration.getProperties());
             ResultSet rs = dao.ejecutarConsulta(SPQuery.LIST_RESERVAS_CUOTAS, new Object[]{documentoVenta, estadoCuota});
-            return Response.ok(new ListResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -149,7 +158,7 @@ public class SDEndpoint {
     @POST
     @Path("reservas")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response crearReseva(
+    public Response crearReserva(
             ReservaDTO dto
     ) {
         try {
@@ -178,12 +187,17 @@ public class SDEndpoint {
             if (dto.getNetwr() == null) {
 
             }
-            ServicioSAPGEL serviceS = new ServicioSAPGEL();
+            daoMap.openDatabase(configuration.getProperties());
+            ServicioSAPGEL serviceS = new ServicioSAPGEL(configuration.getProperties(), "SYSTEM");
             dto.setVbeln(serviceS.registrar(dto.getKunnr(), dto.getLote(), dto.getMatnr(), dto.getNetwr(), dto.getPlazo(), dto.getTipoVenta()));
+            if (!"0".equals(dto.getVbeln())) {
+                daoMap.rawQuery("SELECT public.cambiar_estado_por_reserva(" + dto.getMatnr().substring(dto.getMatnr().length() - 3) + ", '" + dto.getLote() + "')", null);
+            }
             return Response.ok(dto).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
+            daoMap.closeDatabase();
             dao.closeDatabase();
         }
     }
@@ -198,7 +212,7 @@ public class SDEndpoint {
         try {
             dao.openDatabase(configuration.getProperties());
             ResultSet rs = dao.ejecutarConsulta(SPQuery.LIST_CONTRATOS, new Object[]{sociedad, numeroDeudor});
-            return Response.ok(new ListResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -220,7 +234,7 @@ public class SDEndpoint {
             }
             dao.openDatabase(configuration.getProperties());
             ResultSet rs = dao.ejecutarConsulta(SPQuery.LIST_CONTRATOS_POR_PAGAR, new Object[]{sociedad, numeroDeudor, modcon});
-            return Response.ok(new ListResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -236,9 +250,12 @@ public class SDEndpoint {
             @QueryParam("estadoCuota") String estadoCuota
     ) {
         try {
+            if (StringUtils.isEmpty(estadoCuota)) {
+                estadoCuota = "";
+            }
             dao.openDatabase(configuration.getProperties());
             ResultSet rs = dao.ejecutarConsulta(SPQuery.LIST_CONTRATOS_CUOTAS, new Object[]{documentoVenta, estadoCuota});
-            return Response.ok(new ListResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -266,7 +283,7 @@ public class SDEndpoint {
 
             dao.openDatabase(configuration.getProperties());
             ResultSet rs = dao.rawQuery("SELECT NOVAGEL.ZF_GEL_VALIDAR_RESERVA ('" + documentoVenta + "',?) AS success FROM DUMMY", new Object[]{value});
-            return Response.ok(new SingleResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.singleResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -302,7 +319,7 @@ public class SDEndpoint {
 
             dao.openDatabase(configuration.getProperties());
             ResultSet rs = dao.rawQuery("SELECT NOVAGEL.ZF_GEL_VALIDAR_CONTRATO('" + documentoVenta + "','" + numeroCuota + "',?) AS success FROM DUMMY", new Object[]{value});
-            return Response.ok(new SingleResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.singleResultSet(rs))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -401,8 +418,8 @@ public class SDEndpoint {
                 serviceT.anular(tipoDoc + "#" + dto.toOrderId());
                 throw new GELException(CodeError.GEL30021);
             }
-            insertar(r1, transaccion, monto, "BOB");
-            return Response.ok(HelperSAP.createResponse(r1)).build();
+            asicon = insertar(r1, transaccion, monto, "BOB");
+            return Response.ok(HelperSAP.createResponse(r1, asicon)).build();
 
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
@@ -462,8 +479,6 @@ public class SDEndpoint {
             ZfiWsCobranzasIcTt i0 = HelperSAP.getZfiWsCobranzasIcTt(items, dto, user, tipoDoc, cantidadHistorico);
 
             ServicioLINKSER serviceL = new ServicioLINKSER(configuration.getProperties(), dto.getBukrs());
-            cargarDatos(serviceL);
-
             String transaccion = serviceL.pagar(dto, codComercio);
             i0.getItem().forEach((elem) -> {
                 elem.setNumcom(transaccion);
@@ -473,8 +488,8 @@ public class SDEndpoint {
                 serviceL.anular();
                 throw new GELException(CodeError.GEL30021);
             }
-            insertar(r1, transaccion, BigDecimal.ZERO, "BOB");
-            return Response.ok(HelperSAP.createResponse(r1)).build();
+            asicon = insertar(r1, transaccion, BigDecimal.ZERO, "BOB");
+            return Response.ok(HelperSAP.createResponse(r1, asicon)).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -568,13 +583,14 @@ public class SDEndpoint {
                         item.put("atwrt03", rs.getString("atwrt_03"));
                         item.put("netwr", rs.getBigDecimal("netwr"));
                         item.put("pname", rs.getString("pname"));
+                        item.put("netwr", rs.getBigDecimal("netwr"));
                         moneda = rs.getString("waerk");
                         item.put("waerk", moneda);
                         item.put("cttel", rs.getString("cttel"));
                         item.put("fecven", "C".equals(tipdoc) ? "1900-01-01" : rs.getString("fecven"));
                     }
                     if (item != null) {
-                        rs = daoPG.rawQuery("SELECT seqcuo, impcuo FROM pagos.transaccion_response WHERE doccon = '" + documentoVenta + "' AND asicon = '" + asicon + "';", null);
+                        rs = daoPG.rawQuery("SELECT seqcuo, impcuo FROM pagos.transaccion_response WHERE doccon = '" + documentoVenta + "' AND asicon = '" + asicon + "' ORDER BY 1;", null);
                         String seqcuo = "";
                         BigDecimal total = BigDecimal.ZERO;
                         if (rs.next()) {
@@ -584,7 +600,7 @@ public class SDEndpoint {
                         }
                         String seqcuoUlt = "";
                         while (rs.next()) {
-                            seqcuoUlt = "-" + rs.getString("seqcuo");
+                            seqcuoUlt = "-" + rs.getBigDecimal("seqcuo").intValue();
                             total = total.add(rs.getBigDecimal("impcuo"));
                         }
                         item.put("fplt", seqcuo + seqcuoUlt);
@@ -593,18 +609,17 @@ public class SDEndpoint {
                     }
                 } else {
                     String seqcuo = "";
-                    String comma = "";
                     BigDecimal total = BigDecimal.ZERO;
                     String moneda = "BOB";
                     if (documentoVenta.charAt(0) == '4') {
-                        rs = dao.ejecutarConsulta(SPQuery.VOUCHER_CONTRATO, new Object[]{documentoVenta, 0, asicon});
+                        rs = dao.ejecutarConsulta(SPQuery.VOUCHER_CONTRATO, new Object[]{documentoVenta, 0, numeroDocumento});
                     } else {
-                        rs = dao.ejecutarConsulta(SPQuery.VOUCHER_RESERVA, new Object[]{documentoVenta, asicon});
+                        rs = dao.ejecutarConsulta(SPQuery.VOUCHER_RESERVA, new Object[]{documentoVenta, numeroDocumento});
                     }
                     if (rs.next()) {
                         item = new HashMap<>();
                         item.put("vbeln", rs.getString("vbln"));
-                        seqcuo += comma + rs.getString("fplt");
+                        seqcuo = rs.getString("fplt");
                         item.put("asicon", rs.getString("asicon"));
                         item.put("fkpg", rs.getString("fkpg"));
                         total = total.add(rs.getBigDecimal("fakw"));
@@ -620,15 +635,15 @@ public class SDEndpoint {
                         item.put("waerk", moneda);
                         item.put("cttel", rs.getString("cttel"));
                         item.put("fecven", documentoVenta.charAt(0) == '4' ? "1900-01-01" : rs.getString("fecven"));
-                        comma = ",";
                     }
                     if (item != null) {
+                        String seqcuoUlt = "";
                         while (rs.next()) {
-                            seqcuo += comma + rs.getString("fplt");
+                            seqcuoUlt = " - " + rs.getBigDecimal("fplt").intValue();
                             total = total.add(rs.getBigDecimal("fakw"));
-                            comma = ",";
+                            item.put("netwr", rs.getBigDecimal("netwr"));
                         }
-                        item.put("fplt", seqcuo);
+                        item.put("fplt", seqcuo + seqcuoUlt);
                         item.put("fakw", total);
                         item.put("fakwlit", SAPUtils.literalMoneda(total, moneda));
                     }
@@ -655,9 +670,9 @@ public class SDEndpoint {
             matnr = matnr.substring(matnr.length() - 3);
             dao.openDatabase(configuration.getProperties());
             ResultSet rs = dao.ejecutarConsulta(SPQuery.FORMAS_DE_PAGO, new Object[]{matnr});
-            HashMap<String, String> nombres = new HashMap<>();
-            nombres.put("bandera", "tipoPago");
-            return Response.ok(new ListResultOutput(rs, nombres)).build();
+            HashMap<Integer, String> nombres = new HashMap<>();
+            nombres.put(4, "tipoPago");
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs, nombres))).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
@@ -728,6 +743,9 @@ public class SDEndpoint {
                         totalPlanpago = rs.getBigDecimal("nuevo_total_pp");
                         header.put("totalPlanPago", totalPlanpago);
                     }
+                    if (cuota.doubleValue() <= 0) {
+                        throw new GELException(CodeError.GEL30026);
+                    }
                     if (header != null) {
                         rs.close();
                         List<HashMap<String, Object>> lista = new ArrayList<>();
@@ -783,14 +801,15 @@ public class SDEndpoint {
         } finally {
             daoPG.closeDatabase();
         }
-
     }
 
-    private void insertar(ZfiWsCobranzasEcTt r1, String transaccion, BigDecimal monto, String moneda) {
+    private String insertar(ZfiWsCobranzasEcTt r1, String transaccion, BigDecimal monto, String moneda) {
         try {
             daoPG.openDatabase(configuration.getProperties());
             asicon = "";
-            for (ZfiWsCobranzasEcStr elem : r1.getItem()) {
+            final List<ZfiWsCobranzasEcStr> lista = r1.getItem();
+            for (int i = lista.size(); i > 0; i--) {
+                ZfiWsCobranzasEcStr elem = lista.get(i - 1);
                 Map<String, Object> fila = new HashMap<>();
                 if (asicon.isEmpty()) {
                     asicon = elem.getAsicon();
@@ -821,6 +840,7 @@ public class SDEndpoint {
         } finally {
             daoPG.closeDatabase();
         }
+        return asicon;
     }
 
     @GET
@@ -869,7 +889,7 @@ public class SDEndpoint {
         try {
             dao.openDatabase(configuration.getProperties());
             daoPG.openDatabase(configuration.getProperties());
-            ResultSet rs = dao.rawQuery("SELECT DISTINCT PROYECTO, DESCRIPCION, PROPIETARIO, MONEDA, MINIMO, COMERCIALIZA, MONTO_RESERVA FROM SAPABAP1.ZSD_PROYECTO WHERE COMERCIALIZA = '" + sociedad + "' ORDER BY PROYECTO LIMIT 30", null);
+            ResultSet rs = dao.rawQuery("SELECT DISTINCT PROYECTO, DESCRIPCION, PROPIETARIO, MONEDA, MINIMO, COMERCIALIZA, MONTO_RESERVA FROM SAPABAP1.ZSD_PROYECTO WHERE COMERCIALIZA = '" + sociedad + "' ORDER BY PROYECTO LIMIT 32", null);
             String matnr = "";
             String maktx = "";
             String bukrs = "";
@@ -908,8 +928,9 @@ public class SDEndpoint {
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
+            System.out.println("FIN DATABASE");
             daoPG.closeDatabase();
-            dao.closeDatabase();
+            //dao.closeDatabase();
         }
     }
 
@@ -988,7 +1009,8 @@ public class SDEndpoint {
                 if (rs.next()) {
                     String[] lote = rs.getString("cod_lote").split("-");
                     ResultSet rsSap = dao.ejecutarConsulta(SPQuery.GET_LOTE, new Object[]{Integer.parseInt(lote[0]), lote[1] + lote[2] + lote[3]});
-                    return Response.ok(new SingleResultOutput(rsSap)).build();
+
+                    return Response.ok(new ArrayOutput(ResultSetToJsonMapper.singleResultSet(rsSap))).build();
                 }
 
             } catch (SQLException ex) {
@@ -1046,35 +1068,6 @@ public class SDEndpoint {
         }
     }
 
-    private void cargarDatos(ServicioLINKSER service) {
-        try {
-            daoPG.openDatabase(configuration.getProperties());
-            asicon = "";
-            Date date = Calendar.getInstance().getTime();
-            DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
-            String fecha = dateFormat.format(date);
-            ResultSet rs = daoPG.rawQuery("SELECT reto FROM pagos.linkser WHERE fecha = '" + fecha + "'", null);
-            try {
-                if (rs.next()) {
-                    service.setReto(rs.getString("reto"));
-                } else {
-                    service.registrar();
-                    String reto = service.getReto();
-                    HashMap<String, Object> fila = new HashMap<>();
-                    fila.put("reto", reto);
-                    fila.put("fecha", fecha);
-                    daoPG.insert("pagos.linkser", fila);
-                }
-            } catch (SQLException ex) {
-                throw new GELException(CodeError.GEL20000, ex);
-            }
-        } catch (GELException ex) {
-            throw new GELExceptionMapping(ex);
-        } finally {
-            daoPG.closeDatabase();
-        }
-    }
-
     @GET
     @Path("{sociedad}/mensajes/{tipo}/id/{id}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -1088,7 +1081,7 @@ public class SDEndpoint {
             //resultado.put("partner", numeroDeudor);
             daoPG.openDatabase(configuration.getProperties());
             ResultSet rs = daoPG.rawQuery("SELECT * FROM seguridad.zf_gel_s0001f9('" + sociedad + "','" + tipo + "','" + id + "')", null);
-            return Response.ok(new SingleResultOutput(rs)).build();
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.singleResultSet(rs))).build();
 
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
@@ -1101,8 +1094,9 @@ public class SDEndpoint {
     @Path("{sociedad}/solicitud-compra")
     @Produces(MediaType.APPLICATION_JSON)
     public Response saveSolicitud(
-            @PathParam("sociedad") String sociedad
+            @PathParam("sociedad") String sociedad, SolicitudCompraDTO solicitud
     ) {
+        
         HashMap<String, Object> result = new HashMap<>();
         result.put("success", true);
         result.put("numeroSolicitud", "7025632891");
