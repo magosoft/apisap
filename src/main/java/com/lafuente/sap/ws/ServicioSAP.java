@@ -7,8 +7,10 @@ import com.sap.document.sap.soap.functions.mc_style.TmsSVbelnRange;
 import com.sap.document.sap.soap.functions.mc_style.TmsTVbelnRange;
 import com.sap.document.sap.soap.functions.mc_style.ZFIWSCOBRANZA;
 import com.sap.document.sap.soap.functions.mc_style.ZfiWsCobrConsCuotasETt;
+import com.sap.document.sap.soap.functions.mc_style.ZfiWsCobranzasEaTt;
 import com.sap.document.sap.soap.functions.mc_style.ZfiWsCobranzasEcStr;
 import com.sap.document.sap.soap.functions.mc_style.ZfiWsCobranzasEcTt;
+import com.sap.document.sap.soap.functions.mc_style.ZfiWsCobranzasIaTt;
 import com.sap.document.sap.soap.functions.mc_style.ZfiWsCobranzasIcTt;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -146,6 +148,17 @@ public class ServicioSAP {
             }
         }
         return false;
+    }
+
+    public ZfiWsCobranzasEaTt anular(ZfiWsCobranzasIaTt i0) {
+       try {
+            port = crearServicio();
+            return port.zfiWsCobranzasAnulacion(i0);
+        } catch (javax.xml.ws.WebServiceException ex) {
+            return null;
+            //throw new GELException(CodeError.GEL30070, ex);
+        }
+
     }
 
 }

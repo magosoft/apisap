@@ -5,12 +5,15 @@
  */
 package com.lafuente.sap.rest.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  *
  * @author dcaceres
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SimulacionDTO {
 
     private BigDecimal precioLista;
@@ -19,6 +22,7 @@ public class SimulacionDTO {
     private BigDecimal descuento;
     private BigDecimal precioVenta;
     private BigDecimal precioDescuento;
+    private List<CuotaDTO> cuotas;
 
     public BigDecimal getPrecioLista() {
         return precioLista;
@@ -66,6 +70,14 @@ public class SimulacionDTO {
 
     public void setPrecioDescuento(BigDecimal precioDescuento) {
         this.precioDescuento = precioDescuento;
+    }
+
+    public List<CuotaDTO> getCuotas() {
+        return cuotas;
+    }
+
+    public void setCuotas(List<CuotaDTO> cuotas) {
+        this.cuotas = cuotas;
     }
 
 }

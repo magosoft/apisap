@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog" prefer="system">
+    <system systemId="https://200.73.103.30:443/PasarelaServicesTP/CustomerServices?wsdl" uri="wsdl/200.73.103.30_443/PasarelaServicesTP/CustomerServices.wsdl"/>
+    <system systemId="https://200.73.103.30:443/PasarelaServicesTP/CustomerServices?xsd=1" uri="wsdl/200.73.103.30_443/PasarelaServicesTP/CustomerServices.xsd_1.xsd"/>
+</catalog>

@@ -56,7 +56,7 @@ public class HCMEndpoint {
     ) {
         try {
             dao.openDatabase(configuration.getProperties());
-            ResultSet rs = dao.ejecutarConsulta(SPQuery.DIAS_HABILES_VACACION, new Object[]{fechaInicio, dias, sucursal, ciudad, provincia});
+            ResultSet rs = dao.ejecutarConsulta(SPQuery.DIAS_HABILES_VACACION, new Object[]{fechaInicio, dias, ciudad});
             HashMap<String, Object> result = null;
             try {
                 if (rs.next()) {

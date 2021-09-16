@@ -1,6 +1,7 @@
 package com.lafuente.sap.rest.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -11,8 +12,9 @@ import java.util.List;
  * @author GUIDO CACERES PINTO
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PagoDTO implements Serializable {
-
+    
     private String bukrs;
     private String docven;
     private String matnr;
@@ -21,6 +23,7 @@ public class PagoDTO implements Serializable {
     private String moneda;
     private String sucursal;
     private String agencia;
+    private ClienteDTO cliente;
     private List<ItemDTO> items;
 
     public PagoDTO() {
@@ -97,6 +100,14 @@ public class PagoDTO implements Serializable {
         this.moneda = moneda;
     }
 
+    public ClienteDTO getCliente() {
+        return cliente;
+    }
+
+    public void setCliente(ClienteDTO cliente) {
+        this.cliente = cliente;
+    }
+
     public List<ItemDTO> getItems() {
         if (items == null) {
             items = new ArrayList<>();
@@ -131,5 +142,7 @@ public class PagoDTO implements Serializable {
     public String toString() {
         return "PagoDTO{" + "bukrs=" + bukrs + ", docven=" + docven + ", matnr=" + matnr + ", linea=" + linea + ", monto=" + monto + ", moneda=" + moneda + ", sucursal=" + sucursal + ", agencia=" + agencia + ", items=" + items + '}';
     }
+
+  
 
 }

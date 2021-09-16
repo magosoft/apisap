@@ -78,8 +78,16 @@ public class HelperSAP {
         i("[PAGO EXITOSO] CLIENTE: " + r1.getItem().get(0).getNomcli() + ", HORA: " + r1.getItem().get(0).getHora() + ", DATO TERRENO: " + r1.getItem().get(0).getDatter());
         return map;
     }*/
-
-    public static ZfiWsCobranzasIcTt getZfiWsCobranzasIcTt(ZfiWsCobrConsCuotasETt r2, PagoDTO dto, String user, String tipoDoc, int cantHist) throws GELException {
+    public static ZfiWsCobranzasIcTt getZfiWsCobranzasIcTt(ZfiWsCobrConsCuotasETt r2, PagoDTO dto, String user, String tipoDoc, int cantHist)
+            throws GELException {
+        String sucursal = dto.getSucursal();
+        if (StringUtils.isEmpty(sucursal)) {
+            sucursal = SUCURSAL;
+        }
+        String agencia = dto.getAgencia();
+        if (StringUtils.isEmpty(agencia)) {
+            agencia = AGENCIA;
+        }
         List<ZfiWsCobrConsCuotasEStr> items0 = r2.getItem();
         List<ItemDTO> items1 = dto.getItems();
 
@@ -94,7 +102,7 @@ public class HelperSAP {
             ItemDTO i1 = items1.get(i);
             ZfiWsCobrConsCuotasEStr i0 = items0.get(i);
 
-            ZfiWsCobranzasIcStr item = createItem(i0, fecha, hora, user);
+            ZfiWsCobranzasIcStr item = createItem(i0, fecha, hora, user, sucursal, agencia);
             if (RESERVA.equals(tipoDoc)) {
                 validarReserva(i0, i1);
                 i1.setSeqcuo(i0.getSeqcuo());//Cambiar seqcuo a la reserva
@@ -108,14 +116,14 @@ public class HelperSAP {
         return lista;
     }
 
-    private static ZfiWsCobranzasIcStr createItem(ZfiWsCobrConsCuotasEStr r2, String fechaCobro, XMLGregorianCalendar horaCobro, String cajero) {
+    private static ZfiWsCobranzasIcStr createItem(ZfiWsCobrConsCuotasEStr r2, String fechaCobro, XMLGregorianCalendar horaCobro, String cajero, String sucursal, String agencia) {
         ZfiWsCobranzasIcStr e0 = new ZfiWsCobranzasIcStr();
         e0.setBanco(r2.getBanco());
         e0.setBukrs(r2.getGlosa3());
         e0.setFeccob(fechaCobro);
         e0.setHora(horaCobro);
-        e0.setSucurs(SUCURSAL);
-        e0.setAgenci(AGENCIA);
+        e0.setSucurs(sucursal);
+        e0.setAgenci(agencia);
         e0.setDocven(r2.getDocven());
         e0.setTipdoc(r2.getTipdoc());
         e0.setSeqcuo(r2.getSeqcuo());

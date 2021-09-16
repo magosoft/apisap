@@ -5,6 +5,7 @@
  */
 package com.lafuente.sap.ws;
 
+import com.lafuente.sap.exceptions.CodeError;
 import com.lafuente.sap.exceptions.GELException;
 import com.sap.document.sap.rfc.functions.ZCOMERCIAL;
 import com.sap.document.sap.rfc.functions.ZIDRESERVA;
@@ -110,6 +111,6 @@ public class ServicioSAPGEL {
         if ("X".equals(result.getSUCCESS())) {
             return result.getVBELN();
         }
-        throw new GELException(result.getMESSAGE());
+        throw new GELException(CodeError.GEL40101,new Exception(result.getMESSAGE()));
     }
 }

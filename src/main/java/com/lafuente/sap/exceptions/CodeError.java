@@ -12,6 +12,9 @@ public enum CodeError {
     GEL40100(401, "El usuario no ha iniciado sesión. ¡Se requiere autenticación!"),
     
     GEL40000(409, "Error desconocido."),
+    GEL40001(409, "Problemas de encriptación."),
+    GEL40101(409, "Estimado cliente, no se pudo procesar la compra. Inténtelo de nuevo por favor."),
+    
     GEL50000(500, "Upps, tuvimos un error (también tenemos bugs)."),
     GEL50051(400, "No se puede procesar el json."),
     GEL50052(500, "Error al generar el json."),
@@ -28,17 +31,19 @@ public enum CodeError {
     GEL30016(404, "La sumatoria de la cuotas no es igual al total."),
     GEL30017(404, "Las cuotas no puede estar vacia."),
     GEL30018(404, "No puede ser nulo PagoDTO."),
-    GEL30019(404, "La seqcuo no son identicas."),
+    GEL30019(404, "La seqcuo no son identicas."),    
     GEL30020(404, "Usuario o Banco no asignado."),
     GEL30021(404, "El sistema no puede completar la acción, problemas con el servicio SAP."),
     GEL30023(404, "El sistema no puede completar la acción, codigo comercio sin asignar."),
     GEL30024(409, "El importe no puede estar vacio!"),
     GEL30025(409, "El numeroCuota no puede estar vacio!"),
-    GEL30026(409, "Intente de nuevo con una cuota inicial menor!"),
+    GEL30026(409, "Intentelo nuevamente con una cuota inicial menor."),
+    GEL30027(404, "No existe configurado el proyecto."),
     GEL30050(503, "El sistema no puede completar la acción, problemas con el servicio web de TIGOMONEY."),
     GEL30060(503, "El sistema no puede completar la acción, problemas con el servicio web de LINKSER."),
     GEL30070(503, "El sistema no puede completar la acción, problemas con el servicio web de SAP."),
     GEL30080(503, "El sistema no puede completar la acción, problemas con el servicio QR."),
+    
     
     ;
 

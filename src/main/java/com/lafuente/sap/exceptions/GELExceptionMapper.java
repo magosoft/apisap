@@ -29,7 +29,7 @@ public class GELExceptionMapper implements ExceptionMapper<GELExceptionMapping> 
             String s = exception.toString();
             if (exception.getCause() != null && exception.getCause().getMessage() != null) {
                 s += " Causa: " + exception.getCause().getMessage();
-                exception.getCause().printStackTrace();
+                //exception.getCause().printStackTrace();
             }
             Logger.getLogger("API-SAP").log(Level.SEVERE, s);
         }

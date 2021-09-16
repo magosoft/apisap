@@ -1,5 +1,7 @@
 package com.lafuente.sap.rest;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lafuente.linkser.ws.ServicioLINKSER;
 import com.lafuente.sap.dao.MapDatabase;
 import com.lafuente.sap.dao.PGDatabase;
@@ -13,16 +15,30 @@ import com.lafuente.sap.rest.dto.ReservaDTO;
 import com.lafuente.sap.rest.dto.SolicitudCompraDTO;
 import com.lafuente.sap.rest.stream.ArrayOutput;
 import com.lafuente.sap.rest.stream.ResultSetToJsonMapper;
+import com.lafuente.sap.utils.CryptoAppUtils;
 import com.lafuente.sap.utils.SAPUtils;
 import com.lafuente.sap.ws.HelperSAP;
 import com.lafuente.sap.ws.ServicioSAP;
 import com.lafuente.sap.ws.ServicioSAPGEL;
 import com.lafuente.tigomoney.ws.ServicioTIGOMONEY;
 import com.sap.document.sap.soap.functions.mc_style.ZfiWsCobrConsCuotasETt;
+import com.sap.document.sap.soap.functions.mc_style.ZfiWsCobranzasEaTt;
 import com.sap.document.sap.soap.functions.mc_style.ZfiWsCobranzasEcStr;
 import com.sap.document.sap.soap.functions.mc_style.ZfiWsCobranzasEcTt;
+import com.sap.document.sap.soap.functions.mc_style.ZfiWsCobranzasIaStr;
+import com.sap.document.sap.soap.functions.mc_style.ZfiWsCobranzasIaTt;
+import com.sap.document.sap.soap.functions.mc_style.ZfiWsCobranzasIcStr;
 import com.sap.document.sap.soap.functions.mc_style.ZfiWsCobranzasIcTt;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -31,6 +47,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -40,6 +59,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.InvocationCallback;
 import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -54,6 +76,7 @@ import org.apache.commons.lang3.StringUtils;
 @Stateless
 public class SDEndpoint {
 
+    private final String RESPONSE_SMS = "Response: SuccessMessage: Commit successfully!";
     @Inject
     private SPDao dao;
 
@@ -87,6 +110,12 @@ public class SDEndpoint {
             @QueryParam("numeroDocumento") String numeroDocumento
     ) {
         try {
+            if (StringUtils.isEmpty(numeroDeudor)) {
+                numeroDeudor = "";
+            }
+            if (StringUtils.isEmpty(numeroDocumento)) {
+                numeroDocumento = "";
+            }
             dao.openDatabase(configuration.getProperties());
             ResultSet rs = dao.ejecutarConsulta(SPQuery.LIST_CLIENTES, new Object[]{sociedad, numeroDeudor, numeroDocumento});
             return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs))).build();
@@ -359,6 +388,22 @@ public class SDEndpoint {
         return linkser(dto, HelperSAP.CONTRATO);
     }
 
+    @POST
+    @Path("reservas/pago")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response cbReserva(PagoDTO dto) {
+        return pago(dto, HelperSAP.RESERVA);
+    }
+
+    @POST
+    @Path("contratos/pago")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response cbContrato(PagoDTO dto) {
+        return pago(dto, HelperSAP.CONTRATO);
+    }
+
     private Response tigoMoney(PagoDTO dto, String tipoDoc) {
         try {
             HelperSAP.validarDTO(dto);
@@ -418,7 +463,7 @@ public class SDEndpoint {
                 serviceT.anular(tipoDoc + "#" + dto.toOrderId());
                 throw new GELException(CodeError.GEL30021);
             }
-            asicon = insertar(r1, transaccion, monto, "BOB");
+            asicon = insertar(r1, transaccion, monto, "BOB", user, dto.getLinea());
             return Response.ok(HelperSAP.createResponse(r1, asicon)).build();
 
         } catch (GELException ex) {
@@ -443,8 +488,6 @@ public class SDEndpoint {
                     bank = r.getString("hbkid");
                     user = r.getString("usnam");
                 }
-                i("CAJERO: " + user);
-                i("BANCO: " + bank);
             } catch (SQLException ex) {
                 throw new GELException(CodeError.GEL20000, ex);
             }
@@ -456,7 +499,6 @@ public class SDEndpoint {
                 if (r.next()) {
                     codComercio = r.getString("COM_LINKSER");
                 }
-                i("COD_COMERCIO: " + codComercio);
             } catch (SQLException ex) {
                 throw new GELException(CodeError.GEL20000, ex);
             }
@@ -485,10 +527,13 @@ public class SDEndpoint {
             });
             ZfiWsCobranzasEcTt r1 = serviceS.cobrar(i0);
             if (serviceS.hasErrorCobro(r1)) {
+                if (r1 == null) {
+                    insertar(i0);
+                }
                 serviceL.anular();
                 throw new GELException(CodeError.GEL30021);
             }
-            asicon = insertar(r1, transaccion, BigDecimal.ZERO, "BOB");
+            asicon = insertar(r1, transaccion, BigDecimal.ZERO, "BOB", user, "***");
             return Response.ok(HelperSAP.createResponse(r1, asicon)).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
@@ -497,6 +542,152 @@ public class SDEndpoint {
         }
     }
 
+    private Response pago(PagoDTO dto, String tipoDoc) {
+        try {
+            HelperSAP.validarDTO(dto);
+            i("SAP: " + dto.toString());
+            String user = "";
+            String bank = "";
+            String codComercio = "";
+            dao.openDatabase(configuration.getProperties());
+            ResultSet r = dao.rawQuery("SELECT DISTINCT bukrs,hbkid,usnam FROM SAPABAP1.ZFI_BANK_PRO_WS WHERE codpro = '" + dto.getMatnr() + "' and serban = 'LIN'", null);
+            try {
+                if (r.next()) {
+                    bank = r.getString("hbkid");
+                    user = r.getString("usnam");
+                }
+            } catch (SQLException ex) {
+                throw new GELException(CodeError.GEL20000, ex);
+            }
+            if (bank.isEmpty()) {
+                throw new GELException(CodeError.GEL30020);
+            }
+            r = dao.rawQuery("SELECT DISTINCT COM_LINKSER FROM SAPABAP1.ZSD_PROYECTO WHERE PROYECTO = '" + dto.getMatnr() + "'", null);
+            try {
+                if (r.next()) {
+                    codComercio = r.getString("COM_LINKSER");
+                }
+            } catch (SQLException ex) {
+                throw new GELException(CodeError.GEL20000, ex);
+            }
+            if (codComercio.isEmpty()) {
+                throw new GELException(CodeError.GEL30023);
+            }
+            int cantidadHistorico = 0;
+            if (HelperSAP.CONTRATO.equals(tipoDoc)) {
+                r = dao.rawQuery("SELECT COUNT(B.NUM_CUOTA) AS CANT FROM sapabap1.ZSD_HISTC01 A, SAPABAP1.ZSD_HISTC02 B WHERE B.VBELN = CASE WHEN LENGTH(NUM_CONTRATO_SAI) = 0 THEN NUM_CONTRATO_SAP ELSE NUM_CONTRATO_SAI END AND A.NUM_CONTRATO_SAP = '" + dto.getDocven() + "'", null);
+                try {
+                    if (r.next()) {
+                        cantidadHistorico = r.getInt("CANT");
+                    }
+                } catch (SQLException ex) {
+                    throw new GELException(CodeError.GEL20000, ex);
+                }
+            }
+            ServicioSAP serviceS = new ServicioSAP(configuration.getProperties(), bank, user);
+            ZfiWsCobrConsCuotasETt items = serviceS.obtenerCuotas(dto, HelperSAP.RESERVA.equals(tipoDoc));
+            ZfiWsCobranzasIcTt i0 = HelperSAP.getZfiWsCobranzasIcTt(items, dto, user, tipoDoc, cantidadHistorico);
+            String transaccion = "";
+            i0.getItem().forEach((elem) -> {
+                elem.setNumcom(transaccion);
+            });
+            ZfiWsCobranzasEcTt r1 = serviceS.cobrar(i0);
+            if (serviceS.hasErrorCobro(r1)) {
+                if (r1 == null) {
+                    insertar(i0);
+                }
+                throw new GELException(CodeError.GEL30021);
+            }
+            asicon = insertar(r1, transaccion, BigDecimal.ZERO, "BOB", user, "***");
+            return Response.ok(HelperSAP.createResponse(r1, asicon)).build();
+        } catch (GELException ex) {
+            throw new GELExceptionMapping(ex);
+        } finally {
+            dao.closeDatabase();
+        }
+    }
+
+    /*private Response cybersource(PagoDTO dto, String tipoDoc) {
+        try {
+            HelperSAP.validarDTO(dto);
+            i("CYBERSOURCE: " + dto.toString());
+            String user = "";
+            String bank = "";
+            String bukrs = "";
+            String merchantId = "linkser_0458928";
+            String shareSecretID = "DlD20hl1bsEsDjJggdHOKlLdQ+oxcVLxSS2tnHNoZi0=";
+            String keyid = "8beb490e-a1f3-41b4-aee4-6fadd8f6d9a0";
+
+            dao.openDatabase(configuration.getProperties());
+            ResultSet r = dao.rawQuery("SELECT DISTINCT bukrs,hbkid,usnam FROM SAPABAP1.ZFI_BANK_PRO_WS WHERE codpro = '" + dto.getMatnr() + "' and serban = 'LIN'", null);
+            try {
+                if (r.next()) {
+                    bank = r.getString("hbkid");
+                    user = r.getString("usnam");
+                }
+            } catch (SQLException ex) {
+                throw new GELException(CodeError.GEL20000, ex);
+            }
+            if (bank.isEmpty()) {
+                throw new GELException(CodeError.GEL30020);
+            }
+            r = dao.rawQuery("SELECT DISTINCT COM_LINKSER,PROPIETARIO FROM SAPABAP1.ZSD_PROYECTO WHERE PROYECTO = '" + dto.getMatnr() + "'", null);
+            try {
+                if (r.next()) {
+                    //merchantId = "linkser_" + r.getString("COM_LINKSER");
+                    bukrs = r.getString("PROPIETARIO");
+                }
+            } catch (SQLException ex) {
+                throw new GELException(CodeError.GEL20000, ex);
+            }
+            if (merchantId.isEmpty()) {
+                throw new GELException(CodeError.GEL30023);
+            }
+            int cantidadHistorico = 0;
+            if (HelperSAP.CONTRATO.equals(tipoDoc)) {
+                r = dao.rawQuery("SELECT COUNT(B.NUM_CUOTA) AS CANT FROM sapabap1.ZSD_HISTC01 A, SAPABAP1.ZSD_HISTC02 B WHERE B.VBELN = CASE WHEN LENGTH(NUM_CONTRATO_SAI) = 0 THEN NUM_CONTRATO_SAP ELSE NUM_CONTRATO_SAI END AND A.NUM_CONTRATO_SAP = '" + dto.getDocven() + "'", null);
+                try {
+                    if (r.next()) {
+                        cantidadHistorico = r.getInt("CANT");
+                    }
+                } catch (SQLException ex) {
+                    throw new GELException(CodeError.GEL20000, ex);
+                }
+            }
+
+            ServicioSAP serviceS = new ServicioSAP(configuration.getProperties(), bank, user);
+            ZfiWsCobrConsCuotasETt items = serviceS.obtenerCuotas(dto, HelperSAP.RESERVA.equals(tipoDoc));
+            ZfiWsCobranzasIcTt i0 = HelperSAP.getZfiWsCobranzasIcTt(items, dto, user, tipoDoc, cantidadHistorico);
+
+            try {
+                ClientCybersource srv = new ClientCybersource(merchantId, keyid, shareSecretID);
+                HashMap<String,Object> res = srv.payment(dto);               
+                System.out.println(res);
+                /*String transaccion = "";
+                i0.getItem().forEach((elem) -> {
+                    elem.setNumcom(transaccion);
+                });
+                ZfiWsCobranzasEcTt r1 = serviceS.cobrar(i0);
+                if (serviceS.hasErrorCobro(r1)) {
+                    if (r1 == null) {
+                        insertar(i0);
+                    }
+                    srv.reversal(transaccion);
+                    throw new GELException(CodeError.GEL30021);
+                }
+                asicon = insertar(r1, transaccion, BigDecimal.ZERO, "BOB", user,"***");
+                return Response.ok(HelperSAP.createResponse(r1, asicon)).build();*/
+ /*return Response.ok().build();
+            } catch (IOException | InvalidKeyException | NoSuchAlgorithmException ex) {
+                throw new GELException(ex);
+            }
+
+        } catch (GELException ex) {
+            throw new GELExceptionMapping(ex);
+        } finally {
+            dao.closeDatabase();
+        }
+    }*/
     @GET
     @Path("{sociedad}/clientes/{numeroDeudor}/contratos-sin-entrega")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -515,12 +706,12 @@ public class SDEndpoint {
                     String uv = rs.getString("nivel1");
                     String mz = rs.getString("nivel2");
                     String lt = rs.getString("nivel3");
-                    ResultSet rsx = daoPG.rawQuery("SELECT public.validar_acta_entrega(" + proy + ",'" + uv + "','" + mz + "','" + lt + "')", null);
+                    String vbeln = rs.getString("contrato");
+                    ResultSet rsx = daoPG.rawQuery("SELECT programacion.f_visita_lote(" + proy + ",'" + vbeln + "','" + uv + mz + lt + "')", null);
                     if (rsx.next()) {
-                        if (!rsx.getBoolean(1)) {
+                        if (rsx.getInt(1) == 1) {
                             HashMap<String, Object> item = new HashMap<>();
-
-                            item.put("vbeln", rs.getString("contrato"));
+                            item.put("vbeln", vbeln);
                             item.put("matnr", Integer.toString(proy));
                             item.put("maktx", rs.getString("nombre_proyecto"));
                             item.put("atwrt01", uv);
@@ -803,7 +994,7 @@ public class SDEndpoint {
         }
     }
 
-    private String insertar(ZfiWsCobranzasEcTt r1, String transaccion, BigDecimal monto, String moneda) {
+    private String insertar(ZfiWsCobranzasEcTt r1, String transaccion, BigDecimal monto, String moneda, String codcaj, String datcob) {
         try {
             daoPG.openDatabase(configuration.getProperties());
             asicon = "";
@@ -814,6 +1005,7 @@ public class SDEndpoint {
                 if (asicon.isEmpty()) {
                     asicon = elem.getAsicon();
                 }
+
                 fila.put("doccon", elem.getDoccon());
                 fila.put("asicon", asicon);
                 fila.put("asicon_sap", elem.getAsicon());
@@ -833,6 +1025,8 @@ public class SDEndpoint {
                 fila.put("imprec", elem.getImprec());
                 fila.put("impcuo", elem.getImpcuo());
                 fila.put("moncuo", elem.getMoncuo());
+                fila.put("codcaj", codcaj);
+                fila.put("datcob", datcob);
                 daoPG.insert("pagos.transaccion_response", fila);
             }
         } catch (GELException ex) {
@@ -841,6 +1035,28 @@ public class SDEndpoint {
             daoPG.closeDatabase();
         }
         return asicon;
+    }
+
+    private void insertar(ZfiWsCobranzasIcTt row) {
+        try {
+            daoPG.openDatabase(configuration.getProperties());
+            asicon = "";
+            final List<ZfiWsCobranzasIcStr> lista = row.getItem();
+            for (int i = lista.size(); i > 0; i--) {
+                ZfiWsCobranzasIcStr elem = lista.get(i - 1);
+                Map<String, Object> fila = new HashMap<>();
+                fila.put("doccon", elem.getDocven());
+                fila.put("seqcuo", elem.getSeqcuo());
+                fila.put("numcom", elem.getNumcom());
+                fila.put("banco", elem.getBanco());
+                fila.put("codcaj", elem.getCodcaj());
+                daoPG.insert("pagos.cobros_revertidos", fila);
+            }
+        } catch (GELException ex) {
+            throw new GELExceptionMapping(ex);
+        } finally {
+            daoPG.closeDatabase();
+        }
     }
 
     @GET
@@ -884,53 +1100,56 @@ public class SDEndpoint {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces({MediaType.APPLICATION_JSON})
     public Response listarProyectos(
-            @PathParam("sociedad") String sociedad) {
+            @PathParam("sociedad") String sociedad,
+            @QueryParam("showInApp") Integer showInApp,
+            @QueryParam("showInAppMapa") Integer showInAppMapa,
+            @QueryParam("showInAppMapaWeb") Integer showInAppMapaWeb) {
         List<HashMap<String, Object>> result = new ArrayList<>();
         try {
             dao.openDatabase(configuration.getProperties());
             daoPG.openDatabase(configuration.getProperties());
-            ResultSet rs = dao.rawQuery("SELECT DISTINCT PROYECTO, DESCRIPCION, PROPIETARIO, MONEDA, MINIMO, COMERCIALIZA, MONTO_RESERVA FROM SAPABAP1.ZSD_PROYECTO WHERE COMERCIALIZA = '" + sociedad + "' ORDER BY PROYECTO LIMIT 32", null);
-            String matnr = "";
-            String maktx = "";
-            String bukrs = "";
-            String waerk = "";
-            BigDecimal minimo = BigDecimal.ZERO;
-            String comercializa = "";
-            BigDecimal montoReserva = BigDecimal.ZERO;
+            String sql = "SELECT codigo,nombre,lanzamiento,url_imagen,url_imagen_web,sale_type FROM seguridad.seg_proyecto WHERE estado = 'AC' ";
+            if (showInApp != null) {
+                sql += showInApp == 0 ? "AND show_in_app = false " : "AND show_in_app = true ";
+            }
+            if (showInAppMapa != null) {
+                sql += showInAppMapa == 0 ? "AND show_in_app_mapa = false " : "AND show_in_app_mapa = true ";
+            }
+            if (showInAppMapaWeb != null) {
+                sql += showInAppMapaWeb == 0 ? "AND show_in_app_mapa_web = false " : "AND show_in_app_mapa_web = true ";
+            }
+            ResultSet rs = daoPG.rawQuery(sql + "ORDER BY TO_DATE(lanzamiento,'DD/MM/YYYY')DESC ", null);
             try {
                 while (rs.next()) {
-                    matnr = rs.getString("PROYECTO");
-                    maktx = rs.getString("DESCRIPCION");
-                    bukrs = rs.getString("PROPIETARIO");
-                    waerk = rs.getString("MONEDA");
-                    minimo = rs.getBigDecimal("MINIMO");
-                    comercializa = rs.getString("COMERCIALIZA");
-                    montoReserva = rs.getBigDecimal("MONTO_RESERVA");
-                    ResultSet rsImg = daoPG.rawQuery("SELECT url_imagen_web FROM seguridad.seg_proyecto WHERE codigo = '" + Integer.parseInt(matnr) + "' ", null);
-                    if (rsImg.next()) {
+                    String codigo = rs.getString("codigo");
+                    sql = "SELECT DISTINCT PROYECTO, DESCRIPCION, PROPIETARIO, MONEDA, MINIMO, COMERCIALIZA, MONTO_RESERVA FROM SAPABAP1.ZSD_PROYECTO WHERE COMERCIALIZA = '" + sociedad + "' AND TO_INTEGER(PROYECTO) = " + codigo;
+                    ResultSet rsSap = dao.rawQuery(sql, null);
+                    if (rsSap.next()) {
                         HashMap<String, Object> item = new HashMap<>();
-                        item.put("matnr", matnr);
-                        item.put("maktx", maktx);
-                        item.put("bukrs", bukrs);
-                        item.put("bukrsCom", comercializa);
-                        item.put("min", minimo);
-                        item.put("waerk", waerk);
-                        item.put("montoReseva", montoReserva);
-                        item.put("urlImg", rsImg.getString("url_imagen_web"));
+                        item.put("matnr", rsSap.getString("PROYECTO"));
+                        item.put("maktx", rsSap.getString("DESCRIPCION"));
+                        item.put("bukrs", rsSap.getString("PROPIETARIO"));
+                        item.put("bukrsCom", rsSap.getString("COMERCIALIZA"));
+                        item.put("min", rsSap.getBigDecimal("MINIMO"));
+                        item.put("waerk", rsSap.getString("MONEDA"));
+                        item.put("montoReseva", rsSap.getBigDecimal("MONTO_RESERVA"));
+                        item.put("urlImg", rs.getString("url_imagen_web"));
+                        item.put("urlImgApp", rs.getString("url_imagen"));
+                        item.put("lanzamiento", rs.getString("lanzamiento"));
+                        item.put("saleType", rs.getString("sale_type"));
                         result.add(item);
                     }
                 }
             } catch (SQLException ex) {
+                //Logger.getLogger(SDEndpoint.class.getName()).log(Level.SEVERE, null, ex);
                 throw new GELException(CodeError.GEL20000, ex);
             }
-
             return Response.ok(result).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
         } finally {
-            System.out.println("FIN DATABASE");
             daoPG.closeDatabase();
-            //dao.closeDatabase();
+            dao.closeDatabase();
         }
     }
 
@@ -944,44 +1163,36 @@ public class SDEndpoint {
         try {
             dao.openDatabase(configuration.getProperties());
             daoPG.openDatabase(configuration.getProperties());
-            matnr = matnr.substring(matnr.length() - 3);
-            ResultSet rs = dao.rawQuery("SELECT DISTINCT PROYECTO, DESCRIPCION, PROPIETARIO, MONEDA, MINIMO, COMERCIALIZA, MONTO_RESERVA FROM SAPABAP1.ZSD_PROYECTO WHERE COMERCIALIZA = '" + sociedad + "' AND CAST(PROYECTO AS INTEGER) = " + matnr + " ORDER BY PROYECTO ", null);
-            String proy = "";
-            String maktx = "";
-            String bukrs = "";
-            String waerk = "";
-            BigDecimal minimo = BigDecimal.ZERO;
-            String comercializa = "";
-            BigDecimal montoReserva = BigDecimal.ZERO;
+            String sql = "SELECT codigo,nombre,lanzamiento,url_imagen,url_imagen_web,sale_type FROM seguridad.seg_proyecto WHERE estado = 'AC' AND codigo = '" + Integer.parseInt(matnr) + "' ";
+            ResultSet rs = daoPG.rawQuery(sql, null);
             HashMap<String, Object> item = null;
             try {
-
-                while (rs.next()) {
-                    proy = rs.getString("PROYECTO");
-                    maktx = rs.getString("DESCRIPCION");
-                    bukrs = rs.getString("PROPIETARIO");
-                    waerk = rs.getString("MONEDA");
-                    minimo = rs.getBigDecimal("MINIMO");
-                    comercializa = rs.getString("COMERCIALIZA");
-                    montoReserva = rs.getBigDecimal("MONTO_RESERVA");
-                    ResultSet rsImg = daoPG.rawQuery("SELECT url_imagen_web FROM seguridad.seg_proyecto WHERE codigo = '" + Integer.parseInt(proy) + "' ", null);
-                    if (rsImg.next()) {
+                if (rs.next()) {
+                    String codigo = rs.getString("codigo");
+                    sql = "SELECT DISTINCT PROYECTO, DESCRIPCION, PROPIETARIO, MONEDA, MINIMO, COMERCIALIZA, MONTO_RESERVA FROM SAPABAP1.ZSD_PROYECTO WHERE COMERCIALIZA = '" + sociedad + "' AND TO_INTEGER(PROYECTO) = " + codigo;
+                    ResultSet rsSap = dao.rawQuery(sql, null);
+                    if (rsSap.next()) {
                         item = new HashMap<>();
-                        item.put("matnr", proy);
-                        item.put("maktx", maktx);
-                        item.put("bukrs", bukrs);
-                        item.put("bukrsCom", comercializa);
-                        item.put("min", minimo);
-                        item.put("waerk", waerk);
-                        item.put("montoReseva", montoReserva);
-                        item.put("urlImg", rsImg.getString("url_imagen_web"));
-
+                        item.put("matnr", rsSap.getString("PROYECTO"));
+                        item.put("maktx", rsSap.getString("DESCRIPCION"));
+                        item.put("bukrs", rsSap.getString("PROPIETARIO"));
+                        item.put("bukrsCom", rsSap.getString("COMERCIALIZA"));
+                        item.put("min", rsSap.getBigDecimal("MINIMO"));
+                        item.put("waerk", rsSap.getString("MONEDA"));
+                        item.put("montoReseva", rsSap.getBigDecimal("MONTO_RESERVA"));
+                        item.put("urlImg", rs.getString("url_imagen_web"));
+                        item.put("urlImgApp", rs.getString("url_imagen"));
+                        item.put("lanzamiento", rs.getString("lanzamiento"));
+                        item.put("saleType", rs.getString("sale_type"));
                     }
                 }
             } catch (SQLException ex) {
+                //Logger.getLogger(SDEndpoint.class.getName()).log(Level.SEVERE, null, ex);
                 throw new GELException(CodeError.GEL20000, ex);
             }
-
+            if (item == null) {
+                throw new GELException(CodeError.GEL30027);
+            }
             return Response.ok(item).build();
         } catch (GELException ex) {
             throw new GELExceptionMapping(ex);
@@ -1009,7 +1220,6 @@ public class SDEndpoint {
                 if (rs.next()) {
                     String[] lote = rs.getString("cod_lote").split("-");
                     ResultSet rsSap = dao.ejecutarConsulta(SPQuery.GET_LOTE, new Object[]{Integer.parseInt(lote[0]), lote[1] + lote[2] + lote[3]});
-
                     return Response.ok(new ArrayOutput(ResultSetToJsonMapper.singleResultSet(rsSap))).build();
                 }
 
@@ -1077,8 +1287,6 @@ public class SDEndpoint {
             @PathParam("id") String id
     ) {
         try {
-            //HashMap<String, Object> resultado = new HashMap<>();
-            //resultado.put("partner", numeroDeudor);
             daoPG.openDatabase(configuration.getProperties());
             ResultSet rs = daoPG.rawQuery("SELECT * FROM seguridad.zf_gel_s0001f9('" + sociedad + "','" + tipo + "','" + id + "')", null);
             return Response.ok(new ArrayOutput(ResultSetToJsonMapper.singleResultSet(rs))).build();
@@ -1090,24 +1298,233 @@ public class SDEndpoint {
         }
     }
 
+    @GET
+    @Path("{sociedad}/validar-horario")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response validarHorario(
+            @PathParam("sociedad") String sociedad,
+            @QueryParam("tipoHorario") String tipo
+    ) {
+        try {
+            String sql = "SELECT * FROM pagos.en_horario('" + sociedad + "')";
+            if (!StringUtils.isEmpty(tipo)) {
+                sql = "SELECT * FROM pagos.en_horario('" + sociedad + "','" + tipo + "')";
+            }
+            daoPG.openDatabase(configuration.getProperties());
+            ResultSet rs = daoPG.rawQuery(sql, null);
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.singleResultSet(rs))).build();
+
+        } catch (GELException ex) {
+            throw new GELExceptionMapping(ex);
+        } finally {
+            daoPG.closeDatabase();
+        }
+    }
+
+    @GET
+    @Path("proyectos/{matnr}/categorias")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listarCategorias(
+            @PathParam("matnr") String matnr
+    ) {
+        try {
+            matnr = matnr.substring(matnr.length() - 3);
+            String sql = "SELECT y.codigo as proyecto, category as categoria, color , legend as descripcion ";
+            sql += "FROM seguridad.ac_category x INNER JOIN seguridad.seg_proyecto y ON x.id_project = y.id ";
+            sql += "WHERE y.codigo = '" + matnr + "' and x.estado = 'AC' ORDER BY 1,2";
+            daoPG.openDatabase(configuration.getProperties());
+            ResultSet rs = daoPG.rawQuery(sql, null);
+            return Response.ok(new ArrayOutput(ResultSetToJsonMapper.listResultSet(rs))).build();
+        } catch (GELException ex) {
+            throw new GELExceptionMapping(ex);
+        } finally {
+            daoPG.closeDatabase();
+        }
+    }
+
     @POST
     @Path("{sociedad}/solicitud-compra")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response saveSolicitud(
             @PathParam("sociedad") String sociedad, SolicitudCompraDTO solicitud
     ) {
-        
-        HashMap<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("numeroSolicitud", "7025632891");
-        return Response.ok(result).build();
-    }
-    //SELECT * FROM seguridad.zf_gel_s0001f9(    in_sociedad character varying,    in_tipo character varying,    in_codigo character varying)
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            daoPG.openDatabase(configuration.getProperties());
+            ResultSet rs;
+            try {
+                String sql = "SELECT * FROM seguridad.create_solicitud('" + sociedad + "', ?);";
+                rs = daoPG.rawQuery(sql, new Object[]{mapper.writeValueAsString(solicitud.toHashMap())});
+                if (rs.next()) {
+                    int id = rs.getInt("id_solicitud");
+                    String usuario = rs.getString("usuario");
+                    String password = rs.getString("password");
+                    String telefono = rs.getString("telefono_recepcion");
+                    String content = rs.getString("content");
+                    String url = rs.getString("url_sms");
 
+                    url += "account=" + CryptoAppUtils.desencriptar(usuario);
+                    url += "&password=" + CryptoAppUtils.desencriptar(password);
+                    url += "&port=" + rs.getString("port");
+                    url += "&destination=" + telefono;
+                    url += "&content=" + URLEncoder.encode(content, StandardCharsets.UTF_8.toString());
+                    String responseSMS = sendGet(url);
+                    if (RESPONSE_SMS.equals(responseSMS)) {
+                        i("SMS Enviado: " + telefono);
+                        Map<String, Object> values = new HashMap<>();
+                        values.put("mensaje_enviado", content);
+                        values.put("numero_envio", telefono);
+                        values.put("estado_envio", "ENVIADO");
+                        daoPG.update("soporte_app_cliente.msj_solicitudes_compras_app", values, "id=" + Integer.toString(id), null);
+
+                        HashMap<String, Object> result = new HashMap<>();
+                        result.put("success", true);
+                        result.put("numeroSolicitud", id);
+                        return Response.ok(result).build();
+                    } else {
+                        throw new GELException("SMS - No enviado");
+                    }
+                } else {
+                    throw new GELException("Solicitud - No creada");
+                }
+            } catch (SQLException ex) {
+                throw new GELException(CodeError.GEL20000, ex);
+            } catch (JsonProcessingException ex) {
+                throw new GELException("JSON - Error");
+            } catch (GELException | UnsupportedEncodingException | InvalidKeyException | NoSuchAlgorithmException | BadPaddingException | IllegalBlockSizeException | NoSuchPaddingException ex) {
+                throw new GELException(CodeError.GEL40001, ex);
+
+            }
+
+        } catch (GELException ex) {
+            throw new GELExceptionMapping(ex);
+        } finally {
+            daoPG.closeDatabase();
+        }
+
+    }
+
+    //SELECT * FROM seguridad.zf_gel_s0001f9(    in_sociedad character varying,    in_tipo character varying,    in_codigo character varying)
     private void i(String message) {
         if (!StringUtils.isEmpty(message)) {
             Logger.getLogger("SD")
                     .log(Level.INFO, message);
         }
+    }
+
+    private String sendGet(String uri) {
+        try {
+            URL url = new URL(uri);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.connect();
+            int code = connection.getResponseCode();
+            if (code == 200 || code == 201) {
+                BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = rd.readLine()) != null) {
+                    sb.append(line);
+                }
+                rd.close();
+                return sb.toString();
+            }
+            return null;
+        } catch (Exception e) {
+
+        }
+        return null;
+    }
+
+    private String sendGet01(String uri) {
+        try {
+            Client sms = ClientBuilder
+                    .newClient();
+
+            /*url += "account=" + CryptoAppUtils.desencriptar(usuario);
+            url += "&password=" + CryptoAppUtils.desencriptar(password);
+            url += "&port=" + rs.getString("port");
+            url += "&destination=" + telefono;
+            url += "&content=" + URLEncoder.encode(content, StandardCharsets.UTF_8.toString());
+             */
+            //Invocation.Builder wt =  .request();
+            sms
+                    .target(uri)
+                    .queryParam("account", CryptoAppUtils.desencriptar("3CM6+xXSi60="))
+                    .queryParam("password", CryptoAppUtils.desencriptar("UJiaYPOnon8="))
+                    .queryParam("port", "1")
+                    .queryParam("destination", "71659732")
+                    .queryParam("content", "Hola mundo")
+                    .request().async()
+                    .get(new InvocationCallback<String>() {
+                        @Override
+                        public void completed(String respuesta) {
+                            System.out.println(respuesta);
+                        }
+
+                        @Override
+                        public void failed(Throwable thrwbl) {
+                            System.out.println(thrwbl);
+                        }
+                    });
+            //sms.close();
+
+            return "OK";
+        } catch (InvalidKeyException ex) {
+            Logger.getLogger(SDEndpoint.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NoSuchAlgorithmException ex) {
+            Logger.getLogger(SDEndpoint.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NoSuchPaddingException ex) {
+            Logger.getLogger(SDEndpoint.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UnsupportedEncodingException ex) {
+            Logger.getLogger(SDEndpoint.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalBlockSizeException ex) {
+            Logger.getLogger(SDEndpoint.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (BadPaddingException ex) {
+            Logger.getLogger(SDEndpoint.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+
+    /* private String sendGet(String url) {
+        Client client = ClientBuilder.newClient();
+        return client.target(url).request().get().readEntity(String.class);
+    }*/
+    public void prueba() {
+        try {
+            String user = "";
+            String bank = "";
+            ZfiWsCobranzasIaTt e0 = new ZfiWsCobranzasIaTt();
+            String sql = "SELECT doccon,seqcuo,banco,codcaj FROM pagos.cobros_revertidos WHERE fecha = NOW();";
+            ResultSet rs = daoPG.rawQuery(sql, null);
+            try {
+                while (rs.next()) {
+                    sql = "SELECT DISTINCT codpro, docven, asicon FROM SAPABAP1.ZFI_CUOTAS ";
+                    sql += "WHERE viacobro = 'CWS' AND feccre = to_char(now(),'YYYYMMDD') ";
+                    sql += "AND docven = '" + rs.getString("doccon") + "' AND TO_INTEGER(seqcuo) = " + rs.getString("seqcuo");
+                    ResultSet r = dao.rawQuery(sql, null);
+                    if (r.next()) {
+                        ZfiWsCobranzasIaStr elem = new ZfiWsCobranzasIaStr();
+                        elem.setCodpro(r.getString("codpro"));
+                        elem.setDocven(r.getString("docven"));
+                        elem.setAsicon(r.getString("asicon"));
+                        elem.setBanco(rs.getString("banco"));
+                        elem.setCodcaj(rs.getString("codcaj"));
+                        e0.getItem().add(elem);
+                    }
+                }
+            } catch (SQLException ex) {
+                throw new GELException(CodeError.GEL20000, ex);
+            }
+            ServicioSAP serviceS = new ServicioSAP(configuration.getProperties(), bank, user);
+            ZfiWsCobranzasEaTt e1 = serviceS.anular(e0);
+            //daoPG.update(sql, values, user, whereArgs)
+        } catch (GELException ex) {
+            throw new GELExceptionMapping(ex);
+        } finally {
+            daoPG.closeDatabase();
+        }
+
     }
 }
